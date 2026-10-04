@@ -149,8 +149,8 @@ Informations dossier Nº<?= $id ?>
                       <i class="ti ti-settings"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="triggerId<?= $file["id"] ?>">
-                      <a class="dropdown-item" href="<?= $file["url"] ?>">Afficher</a>
-                      <a class="dropdown-item" download href="<?= $file["url"] ?>">Télécharger</a>
+                      <a class="dropdown-item" href="<?= base_url("dossiers/fichier/" . $file["id"]) ?>">Afficher</a>
+                      <a class="dropdown-item" download href="<?= base_url("dossiers/fichier/" . $file["id"]) ?>">Télécharger</a>
                     </div>
                   </div>
                 </td>

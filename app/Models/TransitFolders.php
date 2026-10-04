@@ -123,12 +123,8 @@ class TransitFolders extends Model
         if (!empty($folder["data"])) {
             if ($folder["method"] == "first" or $folder["id"]) {
                 $folder["data"]["items"] = $items->where('folder_id', $folder["data"]["id"])->find();
-                $folder["data"]["invoice_to"] = $folder["data"]["invoice_to"] ? $clients->find($folder["data"]["invoice_to"]) : [
-                    "id" => null,
-                    "name" => "INFORMATIONS INDISPONIBLES",
-                    "email" => null
-                ];
-                $folder["data"]["invoice_author"] = $users->find($folder["data"]["invoice_author"]);
+                $folder["data"]["invoice_to"] = $this->relatedOrPlaceholder($clients, $folder["data"]["invoice_to"]);
+                $folder["data"]["invoice_author"] = $this->relatedOrPlaceholder($users, $folder["data"]["invoice_author"]);
                 $folder["data"]["files"] = $files->where("folder_id", $folder["data"]["id"])->find();
 
                 $folder["data"]["invoice_amount"] =
@@ -176,8 +172,8 @@ class TransitFolders extends Model
             } else {
                 for ($i = 0; $i < count($folder["data"]); $i++) {
                     $folder["data"][$i]["items"] = $items->where('folder_id', $folder['data'][$i]["id"])->find();
-                    $folder["data"][$i]["invoice_to"] = $clients->find($folder["data"][$i]["invoice_to"]);
-                    $folder["data"][$i]["invoice_author"] = $users->find($folder["data"][$i]["invoice_author"]);
+                    $folder["data"][$i]["invoice_to"] = $this->relatedOrPlaceholder($clients, $folder["data"][$i]["invoice_to"]);
+                    $folder["data"][$i]["invoice_author"] = $this->relatedOrPlaceholder($users, $folder["data"][$i]["invoice_author"]);
                     $folder["data"][$i]["files"] = $files->where("folder_id", $folder["data"][$i]["id"])->find();
                     $folder["data"][$i]["invoice_amount"] =
                         $folder["data"][$i]["duties_taxes"] +
@@ -224,5 +220,24 @@ class TransitFolders extends Model
             }
         }
         return $folder;
+    }
+
+    /**
+     * Résout un enregistrement lié par son identifiant.
+     *
+     * find(null) renvoie toute la table dans CodeIgniter: sans cette garde, un
+     * dossier sans client ou sans auteur de facturation reçoit la liste
+     * complète, et les vues qui lisent ["id"] ou ["name"] lèvent une
+     * ErrorException. Le repli conserve la forme attendue par les vues.
+     */
+    private function relatedOrPlaceholder(Model $model, $id): array
+    {
+        $record = $id ? $model->find($id) : null;
+
+        return $record ?: [
+            "id" => null,
+            "name" => "INFORMATIONS INDISPONIBLES",
+            "email" => null,
+        ];
     }
 }

@@ -19,18 +19,23 @@ class Users extends BaseController
     public function login()
     {
         $data = $this->request->getPost();
-        $user = (new ModelsUsers())
-            ->where("email", $data["email"])
-            ->where("password", sha1($data["password"]))
+        $modele = new ModelsUsers();
+
+        $user = $modele
+            ->where("email", (string) ($data["email"] ?? ""))
             ->first();
 
-        if (!$user) {
+        if (!$user or !$modele->verifyAndRehash($user, (string) ($data["password"] ?? ""))) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with("error", true);
         }
 
+        // Le hash n'a rien à faire en session, et l'identifiant de session est
+        // renouvelé pour couper toute fixation antérieure à la connexion.
+        unset($user["password"]);
+        session()->regenerate();
         session()->set("userData", $user);
         return redirect()
             ->to("/tableau-de-bord");
@@ -100,15 +105,17 @@ class Users extends BaseController
     {
         $modele = new ModelsUsers();
         $data = $this->request->getPost();
+        $generated = null;
 
         if (isset($data["id"])) {
             //unique email validation
             if (isset($data["email"])) {
-                $email_count = $modele
+                $duplicate = $modele
                     ->select("id")
                     ->where("email", $data["email"])
                     ->first();
-                if (count($email_count) == 1 and $email_count["id"] != $data["id"]) {
+                // first() renvoie null quand l'email est libre: pas de count() ici.
+                if ($duplicate and $duplicate["id"] != $data["id"]) {
                     return redirect()
                         ->back()
                         ->withInput()
@@ -117,6 +124,10 @@ class Users extends BaseController
             }
             $message = "Modifications enregistrées.";
         } else {
+            // Mot de passe initial tiré au hasard: aucun secret partagé ne
+            // traîne dans le dépôt ni dans le formulaire de création.
+            $generated = bin2hex(random_bytes(8));
+            $data["password"] = $generated;
             $message = "Création du compte réussie.";
         }
 
@@ -129,9 +140,13 @@ class Users extends BaseController
                 ->with('error', $th->getMessage());
         }
 
-        return redirect()
+        $redirection = redirect()
             ->back()
             ->with("message", $message);
+
+        return $generated
+            ? $redirection->with("new_password", $generated)
+            : $redirection;
     }
 
     public function delete()
@@ -185,16 +200,14 @@ class Users extends BaseController
             return redirect()->to("/");
         }
 
-        if ($user["password"] != sha1($data["passwordn"])) {
+        if (!$modele->verifyAndRehash($user, (string) ($data["password"] ?? ""))) {
             return redirect()
                 ->back()
-                ->with("error", "Mot de passe incorrecte.");
+                ->with("error", "Mot de passe actuel incorrect.");
         }
 
-        $user["password"] = sha1($data["passwordn"]);
-
         try {
-            $modele->update($user);
+            $modele->update($user["id"], ["password" => $data["passwordn"]]);
         } catch (\Throwable $th) {
             return redirect()
                 ->back()

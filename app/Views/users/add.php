@@ -40,11 +40,11 @@ Utilisateurs
         </div>
         <div class="col-12">
           <div class="alert alert-primary" role="alert">
-            <strong>Information!</strong> Le mot de passe par défaut des utilisateurs est <code>p@ssertr@nsit123+</code>
+            <strong>Information!</strong> Un mot de passe provisoire est généré automatiquement à la création
+            et affiché une seule fois. Transmettez-le à l'utilisateur, qui devra le changer à sa première connexion.
           </div>
 
         </div>
-        <input type="text" hidden value="p@ssertr@nsit123+" name="password">
         <div class="col-md col-lg-4 mx-auto text-center">
           <button type="submit" class="btn btn-primary">
             Créer le compte

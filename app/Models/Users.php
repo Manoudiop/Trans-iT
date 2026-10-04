@@ -47,8 +47,47 @@ class Users extends Model
     protected function hashPassword($user)
     {
         if (isset($user["data"]["password"])) {
-            $user["data"]["password"] =  sha1($user["data"]["password"]);
+            // Garde-fou: ne jamais re-hacher une valeur déjà hachée, sous peine
+            // de rendre le compte inaccessible sans message d'erreur.
+            if (password_get_info($user["data"]["password"])["algo"] === null) {
+                $user["data"]["password"] = password_hash($user["data"]["password"], PASSWORD_DEFAULT);
+            }
         }
         return $user;
+    }
+
+    /**
+     * Vérifie un mot de passe en clair contre le hash stocké et convertit
+     * l'enregistrement au format courant si nécessaire.
+     *
+     * Les comptes créés avant la migration portent un SHA-1 non salé: on les
+     * accepte une dernière fois, puis on les réécrit en bcrypt à la volée.
+     */
+    public function verifyAndRehash(array $user, string $password): bool
+    {
+        $stored = (string) $user["password"];
+
+        if ($this->isLegacyHash($stored)) {
+            if (!hash_equals($stored, sha1($password))) {
+                return false;
+            }
+            $this->update($user["id"], ["password" => $password]);
+            return true;
+        }
+
+        if (!password_verify($password, $stored)) {
+            return false;
+        }
+
+        if (password_needs_rehash($stored, PASSWORD_DEFAULT)) {
+            $this->update($user["id"], ["password" => $password]);
+        }
+
+        return true;
+    }
+
+    private function isLegacyHash(string $hash): bool
+    {
+        return strlen($hash) === 40 && ctype_xdigit($hash);
     }
 }

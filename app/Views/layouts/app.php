@@ -365,6 +365,13 @@
         <strong>Erreur!</strong> <?= session()->error ?>
       </div>
     <?php endif ?>
+
+    <?php if (session()->has("new_password")) : ?>
+      <div class="w-100 alert alert-warning" role="alert">
+        <strong>Mot de passe provisoire:</strong> <code><?= esc(session()->new_password) ?></code><br>
+        Notez-le maintenant, il ne sera plus affiché.
+      </div>
+    <?php endif ?>
   </div>
 
   <!-- Tabler Core -->
@@ -372,12 +379,6 @@
   <script src="<?= base_url("pack/js/demo.min.js?1684106062") ?>" defer></script>
   <script src="https://cdn.datatables.net/2.0.3/js/dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/2.0.3/js/dataTables.bootstrap5.min.js"></script>
-  <script>
-    const myModalReset = new bootstrap.Modal(
-      document.getElementById("modalIdResetPassword"),
-      options,
-    );
-  </script>
   <script>
     document.getElementById("togglePassword").addEventListener("click", () => {
       const password = document.getElementById("password")

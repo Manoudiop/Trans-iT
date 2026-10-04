@@ -100,8 +100,8 @@ Modification dossier Nº<?= $id ?>
                       <i class="ti ti-settings"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="triggerId<?= $file["id"] ?>">
-                      <a class="dropdown-item" href="<?= $file["url"] ?>">Afficher</a>
-                      <a class="dropdown-item" download href="<?= $file["url"] ?>">Télécharger</a>
+                      <a class="dropdown-item" href="<?= base_url("dossiers/fichier/" . $file["id"]) ?>">Afficher</a>
+                      <a class="dropdown-item" download href="<?= base_url("dossiers/fichier/" . $file["id"]) ?>">Télécharger</a>
                       <a class="dropdown-item text-danger" onclick="setDeleteFile(<?= $file['id'] ?>)" href="#" data-bs-toggle="modal" data-bs-target="#deleteFile">Supprimer</a>
                     </div>
                   </div>

@@ -46,6 +46,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('supprimer/(:num)', 'TransitFolders::delete/$1');
     $routes->post('ajouter-fichier', 'TransitFolders::addFile');
     $routes->post('supprimer-fichier', 'TransitFolders::deleteFile');
+    $routes->get('fichier/(:num)', 'TransitFolders::file/$1');
   });
 
   //invoice management

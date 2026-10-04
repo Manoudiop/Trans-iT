@@ -232,24 +232,26 @@ class TransitFolders extends BaseController
 
     public function addFile()
     {
-
         $file = $this->request->getFile("file");
         $data = $this->request->getPost();
 
-        if (!$file or $file->getSize() == 0) {
+        if (!$file or !$file->isValid() or $file->getSize() == 0) {
             return redirect()
                 ->back()
                 ->with("error", "Aucun fichier joint.");
         }
 
-        echo view("loading", [
-            "name" => $data["name"],
-            "size" => $file->getSizeByUnit('mb'),
-        ]);
+        $folderId = intval($data["folder_id"]);
+        if (!(new ModelsTransitFolders())->find($folderId)) {
+            throw new PageNotFoundException("Dossier Nº" . $folderId . " introuvable.");
+        }
+
+        // Nom généré: le nom d'origine vient du client et ne doit jamais
+        // atterrir tel quel sur le disque (collisions, traversée de chemin).
+        $storedName = $file->getRandomName();
 
         try {
-            $file->move(ROOTPATH . '/public/files_uploaded');
-            $data["url"] = base_url("files_uploaded/" . $file->getName());
+            $file->move(WRITEPATH . "uploads/" . $folderId, $storedName);
         } catch (\Throwable $th) {
             return redirect()
                 ->back()
@@ -257,11 +259,14 @@ class TransitFolders extends BaseController
         }
 
         $model = new TransitFiles();
-        $data["folder_id"] = intval($data["folder_id"]);
         try {
-            $model->insert($data);
+            $model->insert([
+                "folder_id" => $folderId,
+                "name" => $data["name"],
+                "path" => $folderId . "/" . $storedName,
+            ]);
         } catch (\Throwable $th) {
-            delete_files(ROOTPATH . '/public/files_uploaded' . $file->getName());
+            @unlink(WRITEPATH . "uploads/" . $folderId . "/" . $storedName);
             return redirect()
                 ->back()
                 ->with("error", $th->getMessage());
@@ -269,7 +274,43 @@ class TransitFolders extends BaseController
 
         return redirect()
             ->back()
-            ->with("Message", "Fichier enregistré: " . $data["name"]);
+            ->with("message", "Fichier enregistré: " . $data["name"]);
+    }
+
+    /**
+     * Sert une pièce jointe depuis le stockage privé. La route est derrière le
+     * filtre d'authentification: plus aucun document n'est accessible par URL
+     * devinée comme c'était le cas sous public/files_uploaded.
+     */
+    public function file($id)
+    {
+        $file = (new TransitFiles())->find($id);
+
+        if (!$file) {
+            throw new PageNotFoundException("Fichier introuvable.");
+        }
+
+        $absolute = $this->resolveFilePath($file);
+        if (!$absolute) {
+            throw new PageNotFoundException("Fichier introuvable.");
+        }
+
+        // Le nom affiché vient de la base: on neutralise ce qui pourrait
+        // casser l'en-tête Content-Disposition.
+        $name = str_replace(["\"", "\r", "\n"], "", (string) $file["name"]);
+
+        // Un document affiché en inline s'exécute dans l'origine de
+        // l'application: seuls les formats inoffensifs y ont droit, le reste
+        // part en téléchargement avec un type neutre.
+        $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION));
+        $inlineSafe = in_array($extension, ["pdf", "png", "jpg", "jpeg", "gif", "webp", "txt"], true);
+
+        return $this->response
+            ->setHeader("Content-Type", $inlineSafe ? $this->guessMimeType($absolute) : "application/octet-stream")
+            ->setHeader("Content-Disposition", ($inlineSafe ? "inline" : "attachment") . '; filename="' . $name . '"')
+            ->setHeader("Content-Length", (string) filesize($absolute))
+            ->setHeader("X-Content-Type-Options", "nosniff")
+            ->setBody(file_get_contents($absolute));
     }
 
     public function deleteFile()
@@ -278,9 +319,18 @@ class TransitFolders extends BaseController
         $model = new TransitFiles();
 
         $file = $model->find($data["id"]);
+        if (!$file) {
+            throw new PageNotFoundException("Fichier introuvable.");
+        }
+
+        // Résolu avant la suppression en base, sinon on perd le chemin.
+        $absolute = $this->resolveFilePath($file);
+
         try {
-            delete_files($file["url"]);
             $model->delete($data["id"]);
+            if ($absolute) {
+                unlink($absolute);
+            }
         } catch (\Throwable $th) {
             return redirect()
                 ->back()
@@ -289,6 +339,40 @@ class TransitFolders extends BaseController
 
         return redirect()
             ->back()
-            ->with("Message", "Fichier supprimé: " . $file["name"]);
+            ->with("message", "Fichier supprimé: " . $file["name"]);
+    }
+
+    /**
+     * Chemin absolu d'une pièce jointe, ou null si elle est introuvable ou
+     * pointe hors du stockage autorisé.
+     */
+    private function resolveFilePath(array $file): ?string
+    {
+        if (!empty($file["path"])) {
+            $root = realpath(WRITEPATH . "uploads");
+            $absolute = realpath(WRITEPATH . "uploads/" . $file["path"]);
+
+            if (!$root or !$absolute or !str_starts_with($absolute, $root)) {
+                return null;
+            }
+
+            return is_file($absolute) ? $absolute : null;
+        }
+
+        // Pièces jointes antérieures à la migration, encore sous public/.
+        if (!empty($file["url"])) {
+            $legacy = realpath(ROOTPATH . "public/files_uploaded/" . basename($file["url"]));
+            return ($legacy and is_file($legacy)) ? $legacy : null;
+        }
+
+        return null;
+    }
+
+    private function guessMimeType(string $absolute): string
+    {
+        $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION));
+        $mime = \Config\Mimes::guessTypeFromExtension($extension);
+
+        return $mime ?: "application/octet-stream";
     }
 }

@@ -12,7 +12,7 @@ class TransitFiles extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ["name", "url", "folder_id"];
+    protected $allowedFields    = ["name", "url", "path", "folder_id"];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
