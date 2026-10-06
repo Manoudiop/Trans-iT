@@ -2,16 +2,20 @@
 
 namespace App\Commands;
 
-use App\Models\TransitFiles;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use Config\Database;
 
 /**
  * Reprise des pièces jointes créées avant le passage au stockage privé.
  *
  * Elles vivent à plat dans public/files_uploaded et sont référencées par une
- * URL publique. On les range sous writable/uploads/<dossier>/ et on renseigne
- * la colonne "path" pour que l'application cesse de dépendre de public/.
+ * URL publique. On les range sous writable/uploads/<agence>/<dossier>/ et on
+ * renseigne la colonne "path".
+ *
+ * La commande passe par le query builder brut et non par le modèle
+ * TransitFiles: elle tourne en CLI, sans session, donc sans agence dans le
+ * contexte, et doit de toute façon traverser toutes les agences.
  */
 class MigrateUploadedFiles extends BaseCommand
 {
@@ -27,8 +31,11 @@ class MigrateUploadedFiles extends BaseCommand
     {
         $dryRun = (bool) CLI::getOption("dry-run");
 
-        $model = new TransitFiles();
-        $pending = $model->where("path", null)->findAll();
+        $db = Database::connect();
+        $pending = $db->table("transit_files")
+            ->where("path", null)
+            ->get()
+            ->getResultArray();
 
         if ($pending === []) {
             CLI::write("Aucune pièce jointe à migrer.", "green");
@@ -56,7 +63,7 @@ class MigrateUploadedFiles extends BaseCommand
                 continue;
             }
 
-            $relative = $file["folder_id"] . "/" . $name;
+            $relative = $file["tenant_id"] . "/" . $file["folder_id"] . "/" . $name;
             $target = WRITEPATH . "uploads/" . $relative;
 
             if ($dryRun) {
@@ -78,7 +85,12 @@ class MigrateUploadedFiles extends BaseCommand
                 continue;
             }
 
-            $model->update($file["id"], ["path" => $relative]);
+            $db->table("transit_files")
+                ->where("id", $file["id"])
+                ->update([
+                    "path" => $relative,
+                    "updated_at" => date("Y-m-d H:i:s"),
+                ]);
             $moved++;
         }
 

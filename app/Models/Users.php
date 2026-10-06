@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class Users extends Model
+class Users extends TenantModel
 {
     protected $table            = 'users';
     protected $primaryKey       = 'id';
@@ -54,6 +52,29 @@ class Users extends Model
             }
         }
         return $user;
+    }
+
+    /**
+     * Recherche un compte par email, toutes agences confondues.
+     *
+     * C'est la seule lecture non cloisonnée de l'application: à la connexion,
+     * l'agence n'est pas encore connue. Elle passe délibérément par le query
+     * builder brut plutôt que par un contournement générique du cloisonnement,
+     * pour que l'exception reste unique, nommée et introuvable ailleurs.
+     * L'unicité globale de users.email garantit au plus une ligne.
+     */
+    public function findForLogin(string $email): ?array
+    {
+        if ($email === "") {
+            return null;
+        }
+
+        $row = $this->db->table($this->table)
+            ->where("email", $email)
+            ->get()
+            ->getRowArray();
+
+        return $row ?: null;
     }
 
     /**

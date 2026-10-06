@@ -25,7 +25,11 @@ class Auth implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        if (!session()->has("userData")) {
+        // tenantId est exigé au même titre que userData: les sessions
+        // ouvertes avant le cloisonnement n'en ont pas, et les laisser passer
+        // ferait échouer la première requête cloisonnée sur une exception
+        // plutôt que sur une invitation à se reconnecter.
+        if (!session()->has("userData") or !session()->has("tenantId")) {
             return redirect()
                 ->to("/")
                 ->with("error_session", true);

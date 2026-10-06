@@ -23,7 +23,22 @@ class Clients extends BaseController
     {
         $model = new ModelsClients();
         $data = $this->request->getPost();
-        $model->delete($data["id"]);
+
+        try {
+            $model->delete($data["id"]);
+        } catch (\Throwable $th) {
+            // La clé étrangère composite refuse désormais la suppression d'un
+            // client encore rattaché à des dossiers, au lieu de détacher
+            // silencieusement des pièces comptables.
+            $message = str_contains($th->getMessage(), "foreign key")
+                ? "Ce client ne peut pas être supprimé: des dossiers de transit lui sont rattachés."
+                : $th->getMessage();
+
+            return redirect()
+                ->back()
+                ->with("error", $message);
+        }
+
         return redirect()
             ->back()
             ->with("message", "Suppression réussie.");

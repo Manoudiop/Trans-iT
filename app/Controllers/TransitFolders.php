@@ -113,8 +113,17 @@ class TransitFolders extends BaseController
     {
         $model = new ModelsTransitFolders();
         $data = $this->request->getPost();
+
+        // save() se comporte en upsert quand useAutoIncrement est désactivé:
+        // il décide d'insérer ou de modifier selon l'existence de la ligne.
+        // Un POST portant un numéro inconnu créait donc un dossier au lieu
+        // d'échouer. Une modification ne doit modifier que de l'existant.
+        if (empty($data["id"]) or !$model->find($data["id"])) {
+            throw new PageNotFoundException("Dossier Nº" . ($data["id"] ?? "") . " introuvable.");
+        }
+
         try {
-            $model->save($data);
+            $model->update($data["id"], $data);
         } catch (\Throwable $th) {
             return redirect()
                 ->back()
@@ -248,10 +257,14 @@ class TransitFolders extends BaseController
 
         // Nom généré: le nom d'origine vient du client et ne doit jamais
         // atterrir tel quel sur le disque (collisions, traversée de chemin).
+        // Le chemin est préfixé par l'agence car le numéro de dossier n'est
+        // unique que par agence: sans ce préfixe, deux agences se
+        // marcheraient dessus sur le disque.
         $storedName = $file->getRandomName();
+        $relative = tenant_id() . "/" . $folderId . "/" . $storedName;
 
         try {
-            $file->move(WRITEPATH . "uploads/" . $folderId, $storedName);
+            $file->move(dirname(WRITEPATH . "uploads/" . $relative), $storedName);
         } catch (\Throwable $th) {
             return redirect()
                 ->back()
@@ -263,10 +276,10 @@ class TransitFolders extends BaseController
             $model->insert([
                 "folder_id" => $folderId,
                 "name" => $data["name"],
-                "path" => $folderId . "/" . $storedName,
+                "path" => $relative,
             ]);
         } catch (\Throwable $th) {
-            @unlink(WRITEPATH . "uploads/" . $folderId . "/" . $storedName);
+            @unlink(WRITEPATH . "uploads/" . $relative);
             return redirect()
                 ->back()
                 ->with("error", $th->getMessage());

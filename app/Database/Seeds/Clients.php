@@ -14,6 +14,7 @@ class Clients extends Seeder
 
         for ($i = 0; $i < 200; $i++) {
             $client = [
+                "tenant_id" => 1,
                 "id" => uniqid("2024"),
                 'account_number' => uniqid(),
                 "name" => $faker->name(),

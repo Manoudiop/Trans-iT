@@ -17,6 +17,8 @@ class Users extends Seeder
         $password = password_hash("theyankee", PASSWORD_DEFAULT);
 
         for ($i=0; $i < 30; $i++) {
+            // insertBatch écrit en direct: tenant_id n'a plus de défaut.
+            $u["tenant_id"] = 1;
             $u["name"] = $faker->firstName()." ".$faker->lastName();
             $u["email"] = "yankee".$i."@transit.com";
             $u["password"] = $password;

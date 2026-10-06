@@ -29,4 +29,17 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+
+    /**
+     * Agence courante. Partagé: la résolution ne doit avoir lieu qu'une fois
+     * par requête, et set() à la connexion doit valoir pour tout le reste.
+     */
+    public static function tenantContext($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('tenantContext');
+        }
+
+        return new \App\Libraries\TenantContext();
+    }
 }

@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class TransitFiles extends Model
+class TransitFiles extends TenantModel
 {
     protected $table            = 'transit_files';
     protected $primaryKey       = 'id';

@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Controllers\TransitFolders as ControllersTransitFolders;
 use App\Models\Clients;
 use App\Models\TransitFolders;
+use App\Models\Tenants;
 use App\Models\Users as ModelsUsers;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -21,15 +22,33 @@ class Users extends BaseController
         $data = $this->request->getPost();
         $modele = new ModelsUsers();
 
-        $user = $modele
-            ->where("email", (string) ($data["email"] ?? ""))
-            ->first();
+        $user = $modele->findForLogin((string) ($data["email"] ?? ""));
 
-        if (!$user or !$modele->verifyAndRehash($user, (string) ($data["password"] ?? ""))) {
+        if (!$user) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with("error", true);
+        }
+
+        // L'agence est déduite du compte et fixée avant toute écriture: la
+        // conversion d'un ancien hash SHA-1 passe par un modèle cloisonné,
+        // qui exige un contexte.
+        tenant()->set((int) $user["tenant_id"]);
+
+        if (!$modele->verifyAndRehash($user, (string) ($data["password"] ?? ""))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with("error", true);
+        }
+
+        $agence = (new Tenants())->find($user["tenant_id"]);
+        if (!$agence or !$agence["active"]) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with("error", "Accès suspendu: contactez l'administrateur.");
         }
 
         // Le hash n'a rien à faire en session, et l'identifiant de session est
@@ -37,6 +56,7 @@ class Users extends BaseController
         unset($user["password"]);
         session()->regenerate();
         session()->set("userData", $user);
+        session()->set("tenantId", (int) $user["tenant_id"]);
         return redirect()
             ->to("/tableau-de-bord");
     }
@@ -107,21 +127,21 @@ class Users extends BaseController
         $data = $this->request->getPost();
         $generated = null;
 
-        if (isset($data["id"])) {
-            //unique email validation
-            if (isset($data["email"])) {
-                $duplicate = $modele
-                    ->select("id")
-                    ->where("email", $data["email"])
-                    ->first();
-                // first() renvoie null quand l'email est libre: pas de count() ici.
-                if ($duplicate and $duplicate["id"] != $data["id"]) {
-                    return redirect()
-                        ->back()
-                        ->withInput()
-                        ->with("error", "Email en doublon.");
-                }
+        // L'email est unique toutes agences confondues, puisque la connexion
+        // se fait par email seul: le doublon se cherche donc hors
+        // cloisonnement, sinon la collision ne remonterait que sous forme
+        // d'erreur SQL brute.
+        if (isset($data["email"]) and $data["email"] !== "") {
+            $duplicate = $modele->findForLogin($data["email"]);
+            if ($duplicate and (!isset($data["id"]) or $duplicate["id"] != $data["id"])) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with("error", "Cet email est déjà utilisé.");
             }
+        }
+
+        if (isset($data["id"])) {
             $message = "Modifications enregistrées.";
         } else {
             // Mot de passe initial tiré au hasard: aucun secret partagé ne

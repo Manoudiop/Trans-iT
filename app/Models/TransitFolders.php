@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class TransitFolders extends Model
+class TransitFolders extends TenantModel
 {
     protected $table            = 'transit_folders';
     protected $primaryKey       = 'id';
@@ -230,7 +228,7 @@ class TransitFolders extends Model
      * complète, et les vues qui lisent ["id"] ou ["name"] lèvent une
      * ErrorException. Le repli conserve la forme attendue par les vues.
      */
-    private function relatedOrPlaceholder(Model $model, $id): array
+    private function relatedOrPlaceholder(TenantModel $model, $id): array
     {
         $record = $id ? $model->find($id) : null;
 

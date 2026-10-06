@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class TransitFolderItems extends Model
+class TransitFolderItems extends TenantModel
 {
     protected $table            = 'folder_items';
     protected $primaryKey       = 'id';
