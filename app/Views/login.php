@@ -15,7 +15,11 @@ Connexion
         <h2 class="h2 text-center mb-4">Connectez vous à votre compte</h2>
         <?php if (session()->has("error")) : ?>
           <div class="alert alert-danger" role="alert">
-            <strong>403</strong> Accès refusé!
+            <?php if (is_string(session()->error)) : ?>
+              <?= esc(session()->error) ?>
+            <?php else : ?>
+              <strong>403</strong> Accès refusé!
+            <?php endif ?>
           </div>
         <?php endif ?>
 

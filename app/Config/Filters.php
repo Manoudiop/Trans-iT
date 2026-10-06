@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\Auth;
 use App\Filters\CanInvoice;
+use App\Filters\TenantResolution;
 use App\Filters\UserManagement;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -40,6 +41,7 @@ class Filters extends BaseFilters
         'auth' => Auth::class,
         'userManagement' => UserManagement::class,
         'canInvoice' => CanInvoice::class,
+        'tenant' => TenantResolution::class,
     ];
 
     /**
@@ -77,6 +79,10 @@ class Filters extends BaseFilters
         'before' => [
             // 'honeypot',
             'csrf',
+            // L'agence doit être validée avant toute logique métier, y
+            // compris avant la page de connexion: c'est le sous-domaine qui
+            // détermine à quelle agence l'email soumis se rapporte.
+            'tenant',
             // 'invalidchars',
         ],
         'after' => [

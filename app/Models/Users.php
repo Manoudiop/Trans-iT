@@ -55,26 +55,30 @@ class Users extends TenantModel
     }
 
     /**
-     * Recherche un compte par email, toutes agences confondues.
+     * Comptes portant cet email, toutes agences confondues.
      *
      * C'est la seule lecture non cloisonnée de l'application: à la connexion,
-     * l'agence n'est pas encore connue. Elle passe délibérément par le query
-     * builder brut plutôt que par un contournement générique du cloisonnement,
-     * pour que l'exception reste unique, nommée et introuvable ailleurs.
-     * L'unicité globale de users.email garantit au plus une ligne.
+     * l'agence n'est pas encore connue quand on entre par le domaine racine.
+     * Elle passe délibérément par le query builder brut plutôt que par un
+     * contournement générique du cloisonnement, pour que l'exception reste
+     * unique, nommée et introuvable ailleurs.
+     *
+     * Depuis que l'email n'est unique que par agence, plusieurs lignes
+     * peuvent correspondre: c'est à l'appelant de lever l'ambiguïté, par le
+     * sous-domaine.
+     *
+     * @return list<array<string, mixed>>
      */
-    public function findForLogin(string $email): ?array
+    public function findAllForLogin(string $email): array
     {
         if ($email === "") {
-            return null;
+            return [];
         }
 
-        $row = $this->db->table($this->table)
+        return $this->db->table($this->table)
             ->where("email", $email)
             ->get()
-            ->getRowArray();
-
-        return $row ?: null;
+            ->getResultArray();
     }
 
     /**

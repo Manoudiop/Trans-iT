@@ -199,4 +199,36 @@ class App extends BaseConfig
      * @see http://www.w3.org/TR/CSP/
      */
     public bool $CSPEnabled = false;
+
+    /**
+     * Autorise dynamiquement le sous-domaine d'agence de la requête courante.
+     *
+     * $allowedHostnames est une liste statique sans joker, et CodeIgniter la
+     * consulte pendant getRequestObject(), donc AVANT l'événement pre_system:
+     * aucun hook applicatif n'est assez précoce. Sans cela, SiteURI retombe
+     * sur l'hôte de $baseURL et base_url() renverrait l'utilisateur hors de
+     * son sous-domaine à la première redirection.
+     *
+     * Ici on ne valide que la FORME de l'hôte. L'existence de l'agence et son
+     * état actif sont vérifiés par le filtre TenantResolution, qui a accès à
+     * la base de données.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (is_cli()) {
+            return;
+        }
+
+        $host = $_SERVER["HTTP_HOST"] ?? null;
+
+        if ($host !== null and (new Tenancy())->slugFromHost($host) !== null) {
+            $hostname = explode(":", $host)[0];
+
+            if (!in_array($hostname, $this->allowedHostnames, true)) {
+                $this->allowedHostnames[] = $hostname;
+            }
+        }
+    }
 }

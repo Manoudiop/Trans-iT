@@ -22,14 +22,34 @@ class Users extends BaseController
         $data = $this->request->getPost();
         $modele = new ModelsUsers();
 
-        $user = $modele->findForLogin((string) ($data["email"] ?? ""));
+        $candidats = $modele->findAllForLogin((string) ($data["email"] ?? ""));
 
-        if (!$user) {
+        // Le sous-domaine, quand il désigne une agence, restreint la
+        // recherche: c'est lui qui lève l'ambiguïté d'un email partagé par
+        // plusieurs agences depuis que l'unicité n'est plus globale.
+        $viaHote = tenant()->tenantFromHost();
+        if ($viaHote !== null) {
+            $candidats = array_values(array_filter(
+                $candidats,
+                static fn (array $u): bool => (int) $u["tenant_id"] === (int) $viaHote["id"]
+            ));
+        }
+
+        if ($candidats === []) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with("error", true);
         }
+
+        if (count($candidats) > 1) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with("error", "Cet email est utilisé par plusieurs agences: connectez-vous depuis le sous-domaine de la vôtre.");
+        }
+
+        $user = $candidats[0];
 
         // L'agence est déduite du compte et fixée avant toute écriture: la
         // conversion d'un ancien hash SHA-1 passe par un modèle cloisonné,
@@ -63,6 +83,10 @@ class Users extends BaseController
 
     public function logout()
     {
+        // Les clés sont retirées avant destroy(), qui ne vide que le stockage
+        // et laisse $_SESSION en mémoire: toute écriture ultérieure
+        // réenregistrerait la session authentifiée.
+        session()->remove(["userData", "tenantId"]);
         session()->destroy();
         return redirect()->to("/");
     }
@@ -127,12 +151,13 @@ class Users extends BaseController
         $data = $this->request->getPost();
         $generated = null;
 
-        // L'email est unique toutes agences confondues, puisque la connexion
-        // se fait par email seul: le doublon se cherche donc hors
-        // cloisonnement, sinon la collision ne remonterait que sous forme
-        // d'erreur SQL brute.
+        // L'email n'est plus unique que par agence: le doublon se cherche
+        // donc via le modèle cloisonné, dans l'agence courante.
         if (isset($data["email"]) and $data["email"] !== "") {
-            $duplicate = $modele->findForLogin($data["email"]);
+            $duplicate = $modele
+                ->select("id")
+                ->where("email", $data["email"])
+                ->first();
             if ($duplicate and (!isset($data["id"]) or $duplicate["id"] != $data["id"])) {
                 return redirect()
                     ->back()
