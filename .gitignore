@@ -125,3 +125,9 @@ nb-configuration.xml
 /results/
 /phpunit*.xml
 /public/files_uploaded
+
+#-------------------------
+# Configuration locale Claude Code
+#-------------------------
+# Chemins absolus propres a chaque machine.
+.claude/
