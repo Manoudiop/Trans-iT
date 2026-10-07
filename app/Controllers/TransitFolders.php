@@ -40,6 +40,13 @@ class TransitFolders extends BaseController
         $data = $this->request->getPost();
         $model = new ModelsTransitFolders();
 
+        if (!quotas()->canAddFolder()) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with("error", "Limite de " . quotas()->foldersPerMonthLimit() . " dossiers par mois atteinte pour votre offre.");
+        }
+
         //id generation
         if (empty($data["id"])) {
             $newId = $this->generateId();
@@ -255,6 +262,16 @@ class TransitFolders extends BaseController
             throw new PageNotFoundException("Dossier Nº" . $folderId . " introuvable.");
         }
 
+        // Le quota est vérifié avant le déplacement: un fichier refusé ne
+        // doit pas laisser de trace sur le disque.
+        if (!quotas()->canStore($file->getSize())) {
+            $limite = quotas()->storageLimitBytes();
+
+            return redirect()
+                ->back()
+                ->with("error", "Espace de stockage épuisé (" . round($limite / 1048576) . " Mo pour votre offre).");
+        }
+
         // Nom généré: le nom d'origine vient du client et ne doit jamais
         // atterrir tel quel sur le disque (collisions, traversée de chemin).
         // Le chemin est préfixé par l'agence car le numéro de dossier n'est
@@ -262,6 +279,8 @@ class TransitFolders extends BaseController
         // marcheraient dessus sur le disque.
         $storedName = $file->getRandomName();
         $relative = tenant_id() . "/" . $folderId . "/" . $storedName;
+        // Lu avant move(), qui invalide l'objet source.
+        $size = $file->getSize();
 
         try {
             $file->move(dirname(WRITEPATH . "uploads/" . $relative), $storedName);
@@ -277,6 +296,7 @@ class TransitFolders extends BaseController
                 "folder_id" => $folderId,
                 "name" => $data["name"],
                 "path" => $relative,
+                "size" => $size,
             ]);
         } catch (\Throwable $th) {
             @unlink(WRITEPATH . "uploads/" . $relative);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\Quotas;
 use App\Libraries\TenantContext;
 
 if (!function_exists("tenant")) {
@@ -15,5 +16,13 @@ if (!function_exists("tenant_id")) {
     function tenant_id(): int
     {
         return tenant()->idOrFail();
+    }
+}
+
+if (!function_exists("quotas")) {
+    /** Quotas de l'agence courante, lus depuis son offre. */
+    function quotas(): Quotas
+    {
+        return service("quotas");
     }
 }

@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\Auth;
 use App\Filters\CanInvoice;
+use App\Filters\PlatformAdmin;
 use App\Filters\TenantResolution;
 use App\Filters\UserManagement;
 use CodeIgniter\Config\Filters as BaseFilters;
@@ -42,6 +43,7 @@ class Filters extends BaseFilters
         'userManagement' => UserManagement::class,
         'canInvoice' => CanInvoice::class,
         'tenant' => TenantResolution::class,
+        'platformAdmin' => PlatformAdmin::class,
     ];
 
     /**

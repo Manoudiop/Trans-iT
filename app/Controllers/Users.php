@@ -168,6 +168,11 @@ class Users extends BaseController
 
         if (isset($data["id"])) {
             $message = "Modifications enregistrées.";
+        } elseif (!quotas()->canAddUser()) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with("error", "Limite de " . quotas()->usersLimit() . " utilisateurs atteinte pour votre offre.");
         } else {
             // Mot de passe initial tiré au hasard: aucun secret partagé ne
             // traîne dans le dépôt ni dans le formulaire de création.

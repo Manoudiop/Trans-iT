@@ -7,6 +7,10 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', "Users::index");
 $routes->post('/', 'Users::login');
+
+//inscription en libre-service, hors authentification
+$routes->get('inscription', 'Signup::form');
+$routes->post('inscription', 'Signup::create');
 $routes->group('', ['filter' => 'auth'], function ($routes) {
   $routes->get('tableau-de-bord', 'Users::dashboard');
   $routes->post('edit-password', 'Users::editPwd');
@@ -60,6 +64,13 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('supprimer/(:num)', 'Invoices::deletePage/$1');
     $routes->post('supprimer/(:num)', 'Invoices::delete/$1');
     $routes->get('imprimer/(:num)', 'Invoices::print/$1');
+  });
+
+  //console d'exploitation de la plateforme
+  $routes->group('console', ['filter' => 'platformAdmin'], function ($routes) {
+    $routes->get('/', 'Console::index');
+    $routes->post('suspendre', 'Console::toggle');
+    $routes->post('offre', 'Console::changePlan');
   });
 
   //rapports

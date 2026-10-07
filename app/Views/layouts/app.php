@@ -197,6 +197,18 @@
                   </span>
                 </a>
               </li>
+              <?php if (!empty(session()->userData["is_platform_admin"])) : ?>
+                <li class="nav-item <?= url_is("console*") ? "active" : "" ?>">
+                  <a class="nav-link d-flex align-items-center" href="<?= base_url("console") ?>">
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                      <i class="ti ti-building"></i>
+                    </span>
+                    <span class="nav-link-title">
+                      Console
+                    </span>
+                  </a>
+                </li>
+              <?php endif ?>
 
 
             </ul>

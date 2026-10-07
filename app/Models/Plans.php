@@ -5,20 +5,27 @@ namespace App\Models;
 use CodeIgniter\Model;
 
 /**
- * Agences clientes du SaaS.
+ * Offres commerciales.
  *
- * Ce modèle n'étend volontairement pas TenantModel: c'est la table qui porte
- * le cloisonnement, elle ne peut pas être cloisonnée par elle-même.
+ * N'étend pas TenantModel: le catalogue est commun à toutes les agences.
  */
-class Tenants extends Model
+class Plans extends Model
 {
-    protected $table            = 'tenants';
+    protected $table            = 'plans';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = ["name", "slug", "active", "plan_id"];
+    protected $allowedFields    = [
+        "name",
+        "slug",
+        "max_users",
+        "max_folders_per_month",
+        "max_storage_mb",
+        "price_cfa",
+        "active",
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -32,6 +39,14 @@ class Tenants extends Model
 
     protected $validationRules = [
         "name" => "required|max_length[255]",
-        "slug" => "required|max_length[100]|alpha_dash|is_unique[tenants.slug,id,{id}]",
+        "slug" => "required|max_length[100]|alpha_dash",
     ];
+
+    /** Offre proposée par défaut à l'inscription. */
+    public function default(): ?array
+    {
+        return $this->where("slug", "decouverte")
+            ->where("active", 1)
+            ->first();
+    }
 }

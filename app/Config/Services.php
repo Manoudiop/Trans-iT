@@ -42,4 +42,17 @@ class Services extends BaseService
 
         return new \App\Libraries\TenantContext();
     }
+
+    /**
+     * Quotas de l'agence courante. Partagé: l'offre et les compteurs sont
+     * relus plusieurs fois par requête (vérification puis affichage).
+     */
+    public static function quotas($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('quotas');
+        }
+
+        return new \App\Libraries\Quotas();
+    }
 }
