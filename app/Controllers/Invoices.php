@@ -155,17 +155,16 @@ class Invoices extends BaseController
 
     public function getSalesFigures($from, $to)
     {
-        $modele = new TransitFolders();
-        $invoices = $modele
+        // Une somme calculée en base, au lieu de charger toutes les factures
+        // de la période — chacune déclenchant le rattachement de ses colis,
+        // de son client, de son auteur et de ses pièces jointes.
+        $row = (new TransitFolders())
+            ->selectSum("invoice_amount", "total")
             ->where("closed", true)
             ->where("invoice_date >=", $from)
             ->where("invoice_date <=", $to)
-            ->find();
-        $sum = 0;
-        foreach ($invoices as $invoice) {
-            $sum += $invoice["invoice_amount"];
-        }
+            ->first();
 
-        return $sum;
+        return (float) ($row["total"] ?? 0);
     }
 }

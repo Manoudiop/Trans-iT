@@ -112,127 +112,142 @@ class TransitFolders extends TenantModel
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
+    /**
+     * Chiffre d'affaires facturé, par mois, pour une année.
+     *
+     * Une requête groupée au lieu de douze appels successifs qui chargeaient
+     * chacun toutes les factures du mois pour les additionner en PHP.
+     *
+     * @return array<int, float> Indexé de 1 à 12, les mois sans facture à 0.
+     */
+    public function monthlySales(int $year): array
+    {
+        $rows = $this->select("MONTH(invoice_date) AS mois, SUM(invoice_amount) AS total")
+            ->where("closed", true)
+            ->where("YEAR(invoice_date)", $year)
+            ->groupBy("MONTH(invoice_date)")
+            ->findAll();
+
+        $parMois = array_fill(1, 12, 0.0);
+
+        foreach ($rows as $row) {
+            $parMois[(int) $row["mois"]] = (float) $row["total"];
+        }
+
+        return $parMois;
+    }
+
+    /**
+     * Complète les dossiers avec leurs relations.
+     *
+     * Le nombre de requêtes est fixe, quel que soit le nombre de dossiers.
+     * L'implémentation précédente interrogeait la base quatre fois par
+     * dossier — colis, client, auteur de facturation, pièces jointes — ce qui
+     * coûtait plus de mille requêtes et dix secondes pour trois cents lignes.
+     */
     protected function getFolderItems($folder)
     {
-        $items = new TransitFolderItems();
-        $clients = new Clients();
-        $users = new Users();
-        $files = new TransitFiles();
-        if (!empty($folder["data"])) {
-            if ($folder["method"] == "first" or $folder["id"]) {
-                $folder["data"]["items"] = $items->where('folder_id', $folder["data"]["id"])->find();
-                $folder["data"]["invoice_to"] = $this->relatedOrPlaceholder($clients, $folder["data"]["invoice_to"]);
-                $folder["data"]["invoice_author"] = $this->relatedOrPlaceholder($users, $folder["data"]["invoice_author"]);
-                $folder["data"]["files"] = $files->where("folder_id", $folder["data"]["id"])->find();
-
-                $folder["data"]["invoice_amount"] =
-                    $folder["data"]["duties_taxes"] +
-                    $folder["data"]["agios"] +
-                    $folder["data"]["bl_stamp"] +
-                    $folder["data"]["shipping_taxe"] +
-                    $folder["data"]["boarding_disembarkation"] +
-                    $folder["data"]["storing_guarding"] +
-                    $folder["data"]["container_transportation"] +
-                    $folder["data"]["handling"] +
-                    $folder["data"]["insurance"] +
-                    $folder["data"]["transportation"] +
-                    $folder["data"]["expert_report"] +
-                    $folder["data"]["customs_excort"] +
-                    $folder["data"]["demurrage"] +
-                    $folder["data"]["customs_clearance"] +
-                    $folder["data"]["postal_package_withdrawal_fees"] +
-                    $folder["data"]["customs_ts_visit"] +
-                    $folder["data"]["full_land_rental"] +
-                    $folder["data"]["visit_admissibility"] +
-                    $folder["data"]["indirect_fees"] +
-                    $folder["data"]["orbus_fees"] +
-                    $folder["data"]["trucking"] +
-                    $folder["data"]["grouping"] +
-                    $folder["data"]["commission_on_disbursements"] +
-                    $folder["data"]["folder_opening_fees"] +
-                    $folder["data"]["transit_commission"] +
-                    $folder["data"]["customs_honorary_fees"] +
-                    $folder["data"]["had"] +
-                    $folder["data"]["internal_handling"] +
-                    $folder["data"]["loading_unloading"] +
-                    $folder["data"]["printer"] +
-                    $folder["data"]["procedures_formalities"] +
-                    $folder["data"]["tps"] +
-                    $folder["data"]["freight"];
-
-                $folder["data"]["items_count"] = 0;
-                $folder["data"]["items_count"] = 0;
-                $folder["data"]["total_weight"] = 0;
-                foreach ($folder["data"]["items"] as $item) {
-                    $folder["data"]["items_count"] += $item["quantity"];
-                    $folder["data"]["total_weight"] += $item["weight"];
-                }
-            } else {
-                for ($i = 0; $i < count($folder["data"]); $i++) {
-                    $folder["data"][$i]["items"] = $items->where('folder_id', $folder['data'][$i]["id"])->find();
-                    $folder["data"][$i]["invoice_to"] = $this->relatedOrPlaceholder($clients, $folder["data"][$i]["invoice_to"]);
-                    $folder["data"][$i]["invoice_author"] = $this->relatedOrPlaceholder($users, $folder["data"][$i]["invoice_author"]);
-                    $folder["data"][$i]["files"] = $files->where("folder_id", $folder["data"][$i]["id"])->find();
-                    $folder["data"][$i]["invoice_amount"] =
-                        $folder["data"][$i]["duties_taxes"] +
-                        $folder["data"][$i]["agios"] +
-                        $folder["data"][$i]["bl_stamp"] +
-                        $folder["data"][$i]["shipping_taxe"] +
-                        $folder["data"][$i]["boarding_disembarkation"] +
-                        $folder["data"][$i]["storing_guarding"] +
-                        $folder["data"][$i]["container_transportation"] +
-                        $folder["data"][$i]["handling"] +
-                        $folder["data"][$i]["insurance"] +
-                        $folder["data"][$i]["transportation"] +
-                        $folder["data"][$i]["expert_report"] +
-                        $folder["data"][$i]["customs_excort"] +
-                        $folder["data"][$i]["demurrage"] +
-                        $folder["data"][$i]["customs_clearance"] +
-                        $folder["data"][$i]["postal_package_withdrawal_fees"] +
-                        $folder["data"][$i]["customs_ts_visit"] +
-                        $folder["data"][$i]["full_land_rental"] +
-                        $folder["data"][$i]["visit_admissibility"] +
-                        $folder["data"][$i]["indirect_fees"] +
-                        $folder["data"][$i]["orbus_fees"] +
-                        $folder["data"][$i]["trucking"] +
-                        $folder["data"][$i]["grouping"] +
-                        $folder["data"][$i]["commission_on_disbursements"] +
-                        $folder["data"][$i]["folder_opening_fees"] +
-                        $folder["data"][$i]["transit_commission"] +
-                        $folder["data"][$i]["customs_honorary_fees"] +
-                        $folder["data"][$i]["had"] +
-                        $folder["data"][$i]["internal_handling"] +
-                        $folder["data"][$i]["loading_unloading"] +
-                        $folder["data"][$i]["printer"] +
-                        $folder["data"][$i]["procedures_formalities"] +
-                        $folder["data"][$i]["tps"] +
-                        $folder["data"][$i]["freight"];
-                    $folder["data"][$i]["items_count"] = 0;
-                    $folder["data"][$i]["items_count"] = 0;
-                    $folder["data"][$i]["total_weight"] = 0;
-                    foreach ($folder["data"][$i]["items"] as $item) {
-                        $folder["data"][$i]["items_count"] += $item["quantity"];
-                        $folder["data"][$i]["total_weight"] += $item["weight"];
-                    }
-                }
-            }
+        if (empty($folder["data"])) {
+            return $folder;
         }
+
+        // singleton distingue find($id) et first() d'un findAll(). Plus
+        // fiable que l'ancien test sur $folder["id"], qui prenait une
+        // recherche par tableau d'identifiants pour un dossier unique.
+        $single = !empty($folder["singleton"]);
+        $rows = $single ? [$folder["data"]] : $folder["data"];
+
+        // Une requête d'agrégat (SUM, COUNT groupé) renvoie des lignes sans
+        // identifiant: il n'y a aucune relation à y rattacher, et tenter de
+        // le faire lèverait une erreur sur une clé absente.
+        if (!array_key_exists("id", $rows[0] ?? [])) {
+            return $folder;
+        }
+
+        $rows = $this->attachRelations($rows);
+
+        $folder["data"] = $single ? $rows[0] : $rows;
+
         return $folder;
     }
 
     /**
-     * Résout un enregistrement lié par son identifiant.
+     * Charge les relations de tous les dossiers en quatre requêtes, puis les
+     * répartit en mémoire.
      *
-     * find(null) renvoie toute la table dans CodeIgniter: sans cette garde, un
-     * dossier sans client ou sans auteur de facturation reçoit la liste
-     * complète, et les vues qui lisent ["id"] ou ["name"] lèvent une
-     * ErrorException. Le repli conserve la forme attendue par les vues.
+     * @param  list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
      */
-    private function relatedOrPlaceholder(TenantModel $model, $id): array
+    private function attachRelations(array $rows): array
     {
-        $record = $id ? $model->find($id) : null;
+        $folderIds = array_column($rows, "id");
+        $clientIds = array_values(array_unique(array_filter(array_column($rows, "invoice_to"))));
+        $authorIds = array_values(array_unique(array_filter(array_column($rows, "invoice_author"))));
 
-        return $record ?: [
+        // Les modèles restent cloisonnés: whereIn passe par beforeFind, donc
+        // par le filtre sur l'agence.
+        $items = $this->groupByFolder(
+            (new TransitFolderItems())->whereIn("folder_id", $folderIds)->findAll()
+        );
+        $files = $this->groupByFolder(
+            (new TransitFiles())->whereIn("folder_id", $folderIds)->findAll()
+        );
+
+        $clients = $clientIds === []
+            ? []
+            : array_column((new Clients())->whereIn("id", $clientIds)->findAll(), null, "id");
+        $authors = $authorIds === []
+            ? []
+            : array_column((new Users())->whereIn("id", $authorIds)->findAll(), null, "id");
+
+        foreach ($rows as &$row) {
+            $id = $row["id"];
+
+            $row["items"] = $items[$id] ?? [];
+            $row["files"] = $files[$id] ?? [];
+
+            // Un client ou un auteur absent de la table — supprimé, ou jamais
+            // renseigné — garde la forme attendue par les vues.
+            $row["invoice_to"] = empty($row["invoice_to"])
+                ? $this->unknownRelated()
+                : ($clients[$row["invoice_to"]] ?? $this->unknownRelated());
+            $row["invoice_author"] = empty($row["invoice_author"])
+                ? $this->unknownRelated()
+                : ($authors[$row["invoice_author"]] ?? $this->unknownRelated());
+
+            // invoice_amount est désormais une colonne générée par la base:
+            // les trente-trois postes ne sont plus additionnés ici.
+            $row["items_count"] = 0;
+            $row["total_weight"] = 0;
+            foreach ($row["items"] as $item) {
+                $row["items_count"] += $item["quantity"];
+                $row["total_weight"] += $item["weight"];
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * @param  list<array<string, mixed>> $rows
+     * @return array<int|string, list<array<string, mixed>>>
+     */
+    private function groupByFolder(array $rows): array
+    {
+        $grouped = [];
+
+        foreach ($rows as $row) {
+            $grouped[$row["folder_id"]][] = $row;
+        }
+
+        return $grouped;
+    }
+
+    /** Forme de repli attendue par les vues pour une relation absente. */
+    private function unknownRelated(): array
+    {
+        return [
             "id" => null,
             "name" => "INFORMATIONS INDISPONIBLES",
             "email" => null,

@@ -97,17 +97,19 @@ class Users extends BaseController
             return redirect()->to("dossiers");
         }
 
-        $sales_chart = [];
-        for ($i = 1; $i <= 12; $i++) {
-            array_push($sales_chart, (new Invoices)->getSalesFigures(date("Y-" . sprintf("%02d", $i) . "-01"), date("Y-" . sprintf("%02d", $i) . "-31")));
-        }
+        // Deux requêtes groupées au lieu de vingt-quatre appels en boucle,
+        // dont douze qui chargeaient toutes les factures d'un mois pour les
+        // additionner en PHP.
+        $annee = (int) date("Y");
+        $moisCourant = (int) date("m");
 
+        $sales_chart = array_values((new TransitFolders())->monthlySales($annee));
+
+        // Les mois à venir restent à null, comme avant: la courbe s'arrête au
+        // mois courant au lieu de retomber à zéro.
         $clients_chart = [];
-        for ($i = 1; $i <= 12; $i++) {
-            array_push($clients_chart, $i <= date("m") ? (new Clients())
-                ->where("created_at >=", date("Y-" . sprintf("%02d", $i) . "-01"))
-                ->where("created_at <=", date("Y-" . sprintf("%02d", $i) . "-31"))
-                ->countAllResults() : null);
+        foreach ((new Clients())->monthlyCounts($annee) as $mois => $total) {
+            $clients_chart[] = $mois <= $moisCourant ? $total : null;
         }
         return view("dashboard", [
             "sales_figures" => (new Invoices())->getSalesFigures(date("Y-m-01"), date("Y-m-d")),
