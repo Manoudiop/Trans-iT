@@ -232,7 +232,9 @@ class TransitFolders extends BaseController
 
         return redirect()
             ->to("/dossiers")
-            ->with("message", 'Suppression du dossier <code>' . $id . '</code> réussie!');
+            // Sans balises: les messages flash sont désormais échappés à
+            // l'affichage, du HTML ici s'afficherait en clair.
+            ->with("message", "Suppression du dossier Nº" . $id . " réussie.");
     }
 
     public function getCriticalFolders()

@@ -26,14 +26,14 @@ Rapports des factures
         <div class="col-sm-6 col-lg-4 col-xl-3">
           <div class="mb-3">
             <label for="from" class="form-label">Date de début</label>
-            <input type="date" class="form-control" value="<?= $_GET["from"] ?? date("Y-m-01") ?>" name="from" id="from" required />
+            <input type="date" class="form-control" value="<?= esc(is_string($_GET["from"] ?? null) ? $_GET["from"] : date("Y-m-01")) ?>" name="from" id="from" required />
           </div>
         </div>
 
         <div class="col-sm-6 col-lg-4 col-xl-3">
           <div class="mb-3">
             <label for="to" class="form-label">Date de fin</label>
-            <input type="date" class="form-control" value="<?= $_GET["to"] ?? date("Y-m-d") ?>" name="to" id="to" required />
+            <input type="date" class="form-control" value="<?= esc(is_string($_GET["to"] ?? null) ? $_GET["to"] : date("Y-m-d")) ?>" name="to" id="to" required />
           </div>
         </div>
         <div class="col-sm-6 col-lg-4 col-xl-3">

@@ -20,23 +20,23 @@ class Reports extends BaseController
 
         $req = $this->request->getGet();
 
-        if (!empty($req)) {
-
-            if ($req["invoice_to"] != "all") {
+        // Un filtre partiel — lien tronqué, paramètre oublié — levait une
+        // erreur sur une clé absente: le code supposait que la présence d'un
+        // paramètre garantissait celle des quatre. Chaque critère est
+        // désormais lu indépendamment, et la période est obligatoire.
+        if (!empty($req["from"]) and !empty($req["to"])) {
+            if (!empty($req["invoice_to"]) and $req["invoice_to"] !== "all") {
                 $modele->where("invoice_to", $req["invoice_to"]);
             }
 
-            if ($req["type"] != "all") {
+            if (!empty($req["type"]) and $req["type"] !== "all") {
                 $modele->where("type", $req["type"]);
             }
 
-            $modele
-                ->where("open_date >=", $req["from"]);
-
-            $modele
-                ->where("open_date <=", $req["to"]);
-
-            $folders = $modele->find();
+            $folders = $modele
+                ->where("open_date >=", $req["from"])
+                ->where("open_date <=", $req["to"])
+                ->findAll();
         }
 
 
@@ -54,20 +54,20 @@ class Reports extends BaseController
 
         $req = $this->request->getGet();
 
-        if (!empty($req)) {
-
-            if ($req["invoice_to"] != "all") {
+        // Même correction que pour le rapport des dossiers.
+        if (!empty($req["from"]) and !empty($req["to"])) {
+            if (!empty($req["invoice_to"]) and $req["invoice_to"] !== "all") {
                 $modele->where("invoice_to", $req["invoice_to"]);
             }
 
-            if ($req["type"] != "all") {
+            if (!empty($req["type"]) and $req["type"] !== "all") {
                 $modele->where("type", $req["type"]);
             }
 
-            $modele->where("invoice_date >=", $req["from"]);
-            $modele->where("invoice_date <=", $req["to"]);
-
-            $invoices = $modele->find();
+            $invoices = $modele
+                ->where("invoice_date >=", $req["from"])
+                ->where("invoice_date <=", $req["to"])
+                ->findAll();
         }
 
 

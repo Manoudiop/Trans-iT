@@ -182,8 +182,8 @@ Facturation du dossier Nº<?= $id ?>
         <div class="col-md-6 col-lg-4">
           <div class="mb-3">
             <label for="invoice_author_name" class="form-label">Auteur de la facturation</label>
-            <input required type="text" class="form-control" id="invoice_author_name" value="<?= session()->userData["name"] ?>" readonly />
-            <input required type="number" name="invoice_author" hidden value="<?= session()->userData["id"] ?>" readonly />
+            <input required type="text" class="form-control" id="invoice_author_name" value="<?= esc(session()->userData["name"]) ?>" readonly />
+            <input required type="number" name="invoice_author" hidden value="<?= esc(session()->userData["id"]) ?>" readonly />
           </div>
         </div>
         <div class="col-md-6 col-lg-4">

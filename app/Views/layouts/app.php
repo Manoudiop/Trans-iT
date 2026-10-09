@@ -78,8 +78,8 @@
             <a href="#" class="nav-link d-flex lh-1 text-reset p-0 btn d-flex gap-2 align-items-center px-1" data-bs-toggle="dropdown" aria-label="Open user menu">
               <i class="ti ti-user"></i>
               <div class="text-start">
-                <small class="text-primary"><?= session()->userData["profile"] ?></small> <br>
-                <?= session()->userData["name"] ?>
+                <small class="text-primary"><?= esc(session()->userData["profile"]) ?></small> <br>
+                <?= esc(session()->userData["name"]) ?>
               </div>
             </a>
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
@@ -223,7 +223,7 @@
                       <path d="M21 21l-6 -6" />
                     </svg>
                   </span>
-                  <input type="text" name="r" value="<?= (isset($_GET["r"]) and url_is("dossiers*")) ? $_GET["r"] : '' ?>" class="form-control" placeholder="Numéro de dossier..." aria-label="Numéro de dossier">
+                  <input type="text" name="r" value="<?= (url_is("dossiers*") and is_string($_GET["r"] ?? null)) ? esc($_GET["r"]) : '' ?>" class="form-control" placeholder="Numéro de dossier..." aria-label="Numéro de dossier">
                 </div>
                 <button type="submit" class="btn btn-primary text-center">
                   OK
@@ -367,14 +367,14 @@
     <?php if (session()->has("message")) : ?>
       <div class="w-100 alert alert-success alert-dismissible fade show" role="alert">
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        <strong>Succès!</strong> <?= session()->message ?>
+        <strong>Succès!</strong> <?= esc(session()->message) ?>
       </div>
     <?php endif ?>
 
     <?php if (session()->has("error")) : ?>
       <div class="w-100 alert alert-danger alert-dismissible fade show" role="alert">
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        <strong>Erreur!</strong> <?= session()->error ?>
+        <strong>Erreur!</strong> <?= esc(session()->error) ?>
       </div>
     <?php endif ?>
 
