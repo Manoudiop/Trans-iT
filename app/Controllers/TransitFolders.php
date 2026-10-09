@@ -47,6 +47,20 @@ class TransitFolders extends BaseController
                 ->with("error", "Limite de " . quotas()->foldersPerMonthLimit() . " dossiers par mois atteinte pour votre offre.");
         }
 
+        // Un dossier à la corbeille occupe toujours son connaissement: sans
+        // ce contrôle, la ressaisie échouerait sur une erreur de doublon
+        // incompréhensible pour l'utilisateur.
+        if (!empty($data["bl"])) {
+            $supprime = $model->deletedHolderOfBl((string) $data["bl"]);
+            if ($supprime !== null) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with("error", "Le connaissement " . $data["bl"] . " appartient au dossier Nº"
+                        . $supprime["id"] . ", qui est à la corbeille. Restaurez-le au lieu de le ressaisir.");
+            }
+        }
+
         //id generation
         if (empty($data["id"])) {
             $newId = $this->generateId();
@@ -235,6 +249,42 @@ class TransitFolders extends BaseController
             // Sans balises: les messages flash sont désormais échappés à
             // l'affichage, du HTML ici s'afficherait en clair.
             ->with("message", "Suppression du dossier Nº" . $id . " réussie.");
+    }
+
+    /**
+     * Corbeille: les dossiers supprimés, restaurables.
+     *
+     * La suppression étant devenue logique, il faut un endroit pour voir et
+     * reprendre ce qui a été supprimé — sans quoi un dossier effacé par
+     * erreur reste inaccessible tout en bloquant son connaissement.
+     */
+    public function trash()
+    {
+        $model = new ModelsTransitFolders();
+
+        return view("transit_folders/trash", [
+            "folders" => $model->onlyDeleted()->orderBy("deleted_at", "desc")->findAll(),
+        ]);
+    }
+
+    public function restore()
+    {
+        $model = new ModelsTransitFolders();
+        $id = $this->request->getPost("id");
+
+        if (empty($id) or $model->onlyDeleted()->where("id", $id)->first() === null) {
+            throw new PageNotFoundException("Dossier Nº" . $id . " introuvable dans la corbeille.");
+        }
+
+        try {
+            $model->restore($id);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with("error", $th->getMessage());
+        }
+
+        return redirect()
+            ->to("dossiers/modifier/" . $id)
+            ->with("message", "Dossier Nº" . $id . " restauré.");
     }
 
     public function getCriticalFolders()

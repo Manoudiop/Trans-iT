@@ -8,7 +8,7 @@ class TransitFolders extends TenantModel
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = [
         'open_date',
@@ -89,7 +89,7 @@ class TransitFolders extends TenantModel
     protected array $castHandlers = [];
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
@@ -111,6 +111,36 @@ class TransitFolders extends TenantModel
     protected $afterFind      = ["getFolderItems"];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    /**
+     * Remet un dossier supprimé en service.
+     *
+     * deleted_at est volontairement absent de $allowedFields, pour qu'aucun
+     * POST ne puisse supprimer ou restaurer un dossier en douce. La
+     * restauration passe donc par le query builder, avec le filtre d'agence
+     * écrit explicitement puisque beforeUpdate n'est pas déclenché ici.
+     */
+    public function restore($id): bool
+    {
+        return (bool) $this->builder()
+            ->where($this->table . ".tenant_id", tenant_id())
+            ->where($this->table . "." . $this->primaryKey, $id)
+            ->update([$this->deletedField => null]);
+    }
+
+    /**
+     * Dossier supprimé portant ce connaissement, s'il en existe un.
+     *
+     * Les index uniques ignorent deleted_at: un dossier à la corbeille
+     * continue d'occuper son numéro de connaissement. Sans ce contrôle,
+     * ressaisir le dossier renverrait une erreur de doublon incompréhensible.
+     */
+    public function deletedHolderOfBl(string $bl): ?array
+    {
+        return $this->onlyDeleted()
+            ->where("bl", $bl)
+            ->first();
+    }
 
     /**
      * Chiffre d'affaires facturé, par mois, pour une année.
