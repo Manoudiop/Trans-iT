@@ -86,37 +86,28 @@ class TransitFolders extends BaseController
     {
         $model = new ModelsTransitFolders();
 
-        // Récupérer le dernier enregistrement de la base de données
-        $lastRecord = $model->orderBy('id', 'DESC')->first();
-        // Si aucun enregistrement n'existe encore
-        if (!$lastRecord) {
-            // Générer un nouvel identifiant pour le premier enregistrement
-            $year = date('Y');
-            $month = date('m');
-            $newId = $year . $month . '00001'; // Ou plus, selon votre choix
-        } else {
-            // Récupérer les parties de l'identifiant
-            $lastId = $lastRecord['id'];
-            $year = substr($lastId, 0, 4);
-            $month = substr($lastId, 4, 2);
-            $number = substr($lastId, 6);
+        $period = date("Ym");
+        $db = db_connect();
 
-            // Vérifier si le mois actuel est différent du mois de l'identifiant le plus récent
-            if ($month != date('m')) {
-                // Si le mois est différent, commencer un nouveau compteur à partir de 1
-                $month = date('m');
-                $number = '00001'; // Ou plus, selon votre choix
-            } else {
-                // Sinon, incrémenter le compteur actuel
-                $number++;
-                // Vous pouvez ajouter une logique pour ajuster la longueur du nombre en fonction de sa longueur actuelle
-            }
+        // Allocation atomique: LAST_INSERT_ID(expr) fixe la valeur de session
+        // et la renvoie, dans la branche insertion comme dans la branche mise
+        // à jour. La ligne (agence, mois) est verrouillée le temps de
+        // l'écriture, donc deux créations simultanées obtiennent deux numéros
+        // distincts — là où la lecture du maximum puis l'incrément laissaient
+        // passer un doublon.
+        //
+        // tenant_id est passé explicitement: folder_sequences est une table
+        // d'infrastructure, sans modèle cloisonné.
+        $db->query(
+            "INSERT INTO `folder_sequences` (`tenant_id`, `period`, `last_number`)"
+            . " VALUES (?, ?, LAST_INSERT_ID(1))"
+            . " ON DUPLICATE KEY UPDATE `last_number` = LAST_INSERT_ID(`last_number` + 1)",
+            [tenant_id(), $period]
+        );
 
-            // Construire le nouvel identifiant
-            $newId = $year . $month . sprintf("%05d", $number);
-        }
+        $next = (int) ($db->query("SELECT LAST_INSERT_ID() AS n")->getRowArray()["n"] ?? 1);
 
-        return $newId;
+        return $period . sprintf("%05d", $next);
     }
 
     public function editPage($id)
