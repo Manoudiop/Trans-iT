@@ -16,12 +16,16 @@ $fcfa = static fn ($montant): string => number_format((float) $montant, 0, ",", 
 $totalEncours = 0;
 $totalDebours = 0;
 $totalFactures = 0;
+$totalRegle = 0;
+$totalEntamees = 0;
 $totalTranches = array_fill_keys(array_keys($invoicing->aging), 0);
 
 foreach ($lignes as $ligne) {
     $totalEncours += (float) $ligne["encours"];
     $totalDebours += (float) $ligne["debours"];
     $totalFactures += (int) $ligne["factures"];
+    $totalRegle += (float) ($ligne["deja_regle"] ?? 0);
+    $totalEntamees += (int) ($ligne["factures_entamees"] ?? 0);
     foreach (array_keys($invoicing->aging) as $cle) {
         $totalTranches[$cle] += (float) ($ligne[$cle] ?? 0);
     }
@@ -50,7 +54,12 @@ foreach ($lignes as $ligne) {
       <div class="card">
         <div class="card-body text-center p-3">
           <div class="h1 m-0"><?= $totalFactures ?></div>
-          <div class="text-muted small">factures non encaissées</div>
+          <div class="text-muted small">
+            factures non soldées
+            <?php if ($totalEntamees) : ?>
+              <br><span class="text-warning"><?= $totalEntamees ?> avec acompte (<?= $fcfa($totalRegle) ?> reçus)</span>
+            <?php endif ?>
+          </div>
         </div>
       </div>
     </div>
@@ -82,7 +91,8 @@ foreach ($lignes as $ligne) {
               <tr>
                 <th>Client</th>
                 <th class="text-end">Factures</th>
-                <th class="text-end">Encours</th>
+                <th class="text-end">Déjà réglé</th>
+                <th class="text-end">Reste dû</th>
                 <th class="text-end">dont débours</th>
                 <th>Plus ancienne</th>
                 <th class="text-end">Jours</th>
@@ -101,6 +111,7 @@ foreach ($lignes as $ligne) {
                     </a>
                   </td>
                   <td class="text-end"><?= esc($ligne["factures"]) ?></td>
+                  <td class="text-end"><?= (float) ($ligne["deja_regle"] ?? 0) ? $fcfa($ligne["deja_regle"]) : "-" ?></td>
                   <td class="text-end"><strong><?= $fcfa($ligne["encours"]) ?></strong></td>
                   <td class="text-end"><?= $fcfa($ligne["debours"]) ?></td>
                   <td><?= $ligne["plus_ancienne"] ? date("d/m/Y", strtotime($ligne["plus_ancienne"])) : "-" ?></td>
@@ -117,6 +128,7 @@ foreach ($lignes as $ligne) {
               <tr>
                 <th>Total</th>
                 <th class="text-end"><?= $totalFactures ?></th>
+                <th class="text-end"><?= $fcfa($totalRegle) ?></th>
                 <th class="text-end"><?= $fcfa($totalEncours) ?></th>
                 <th class="text-end"><?= $fcfa($totalDebours) ?></th>
                 <th></th>

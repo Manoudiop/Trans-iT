@@ -47,6 +47,7 @@ Factures
                       <?php else : ?>
                         <a class="dropdown-item <?= $invoice["closed"] ? "disabled" : "" ?>" href="<?= base_url("factures/facturer/" . $invoice["id"]) ?>">Facturer</a>
                       <?php endif ?>
+                      <a class="dropdown-item" href="<?= base_url("factures/reglements/" . $invoice["id"]) ?>">Règlements</a>
                       <a class="dropdown-item" href="<?= base_url("dossiers/information/" . $invoice["id"]) ?>#facture">Consulter la facture</a>
                       <a class="dropdown-item" href="<?= base_url("factures/imprimer/" . $invoice["id"]) ?>">Imprimer la facture</a>
                       <a class="dropdown-item <?= $invoice["closed"] ? "disabled" : "" ?>" href="<?= base_url("factures/supprimer/" . $invoice["id"]) ?>">Supprimer la facture</a>

@@ -56,6 +56,13 @@ class Workflow extends BaseConfig
             "threshold" => 30,
             "action" => "Relancer le règlement: la trésorerie avancée n'est pas rentrée.",
         ],
+        // Un dossier intégralement réglé mais jamais clôturé restait invisible
+        // et retombait dans « ouvert », faute de branche qui le décrive.
+        "a_cloturer" => [
+            "label" => "Réglé, à clôturer",
+            "threshold" => 15,
+            "action" => "Vérifier les justificatifs et clôturer le dossier.",
+        ],
     ];
 
     public function label(string $stage): string

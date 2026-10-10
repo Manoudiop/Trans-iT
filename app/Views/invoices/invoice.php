@@ -137,11 +137,11 @@ Facturation du dossier Nº<?= $id ?>
                 <div class="row">
                   <div class="col-md-6 col-lg-4 col-xl-3">
                     <p>OT Nº: <code><?= $transit_order ?></code> du <code><?= !in_array($transit_order_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($transit_order_date)) : "-" ?></code> </p>
-                    <p>Facture Nº: <code><?= $invoice ?></code> du <code><?= !in_array($transit_order_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($date_date)) : "-" ?></code> </p>
+                    <p>Facture Nº: <code><?= $invoice ?></code> du <code><?= !in_array($invoice_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($invoice_date)) : "-" ?></code> </p>
                   </div>
                   <div class="col-md-6 col-lg-4 col-xl-3">
-                    <p>Reçu Nº: <code><?= $receipt ?></code> du <code><?= !in_array($receipt_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($transit_order_date)) : "-" ?></code> </p>
-                    <p>Chéque Nº: <code><?= $check ?></code> du <code><?= !in_array($check_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($date_date)) : "-" ?></code> </p>
+                    <p>Reçu Nº: <code><?= $receipt ?></code> du <code><?= !in_array($receipt_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($receipt_date)) : "-" ?></code> </p>
+                    <p>Chéque Nº: <code><?= $check ?></code> du <code><?= !in_array($check_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($check_date)) : "-" ?></code> </p>
                   </div>
                 </div>
               </div>

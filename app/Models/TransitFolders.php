@@ -158,10 +158,23 @@ class TransitFolders extends TenantModel
     {
         $invoicing = config(Invoicing::class);
 
+        // Le solde, pas le montant facturé: un acompte déjà versé n'est plus
+        // de la trésorerie à récupérer.
+        $solde = "(`invoice_amount` - `paid_amount`)";
+
+        // Les règlements partiels ne s'imputent pas poste par poste. La part
+        // de débours restant due est donc calculée au prorata du solde —
+        // convention explicable, à défaut d'une imputation que le métier ne
+        // fournit pas.
+        $deboursRestants = "(" . $invoicing->deboursSql() . ") * " . $solde
+            . " / NULLIF(`invoice_amount`, 0)";
+
         $select = "`invoice_to` AS client_id,"
             . " COUNT(*) AS factures,"
-            . " SUM(`invoice_amount`) AS encours,"
-            . " SUM(" . $invoicing->deboursSql() . ") AS debours,"
+            . " SUM(" . $solde . ") AS encours,"
+            . " SUM(`paid_amount`) AS deja_regle,"
+            . " SUM(COALESCE(" . $deboursRestants . ", 0)) AS debours,"
+            . " SUM(CASE WHEN `paid_amount` > 0 THEN 1 ELSE 0 END) AS factures_entamees,"
             . " MIN(`invoice_date`) AS plus_ancienne,"
             . " MAX(DATEDIFF(CURDATE(), `invoice_date`)) AS jours_max";
 
@@ -176,13 +189,12 @@ class TransitFolders extends TenantModel
                 ? "DATEDIFF(CURDATE(), `invoice_date`) >= " . (int) $tranche["from"]
                 : "DATEDIFF(CURDATE(), `invoice_date`) BETWEEN " . (int) $tranche["from"] . " AND " . (int) $tranche["to"];
 
-            $select .= ", SUM(CASE WHEN " . $condition . " THEN `invoice_amount` ELSE 0 END) AS " . $cle;
+            $select .= ", SUM(CASE WHEN " . $condition . " THEN " . $solde . " ELSE 0 END) AS " . $cle;
         }
 
         return $this->select($select, false)
             ->where("invoiced", true)
-            ->where("receipt_date", null)
-            ->where("check_date", null)
+            ->where("`paid_amount` < `invoice_amount`", null, false)
             ->groupBy("invoice_to")
             ->orderBy("encours", "desc")
             ->findAll();
@@ -198,7 +210,8 @@ class TransitFolders extends TenantModel
     private static function stageSql(): string
     {
         return "CASE"
-            . " WHEN `invoiced` = 1 AND `receipt_date` IS NULL AND `check_date` IS NULL THEN 'a_encaisser'"
+            . " WHEN `invoiced` = 1 AND `paid_amount` >= `invoice_amount` THEN 'a_cloturer'"
+            . " WHEN `invoiced` = 1 THEN 'a_encaisser'"
             . " WHEN `delivery_date` IS NOT NULL AND `invoiced` = 0 THEN 'a_facturer'"
             . " WHEN `bae_date` IS NOT NULL AND `delivery_date` IS NULL THEN 'a_livrer'"
             . " WHEN `customs_admission_date` IS NOT NULL AND `bae_date` IS NULL THEN 'en_douane'"
@@ -210,7 +223,8 @@ class TransitFolders extends TenantModel
     private static function stageSinceSql(): string
     {
         return "CASE"
-            . " WHEN `invoiced` = 1 AND `receipt_date` IS NULL AND `check_date` IS NULL THEN `invoice_date`"
+            . " WHEN `invoiced` = 1 AND `paid_amount` >= `invoice_amount` THEN `invoice_date`"
+            . " WHEN `invoiced` = 1 THEN `invoice_date`"
             . " WHEN `delivery_date` IS NOT NULL AND `invoiced` = 0 THEN `delivery_date`"
             . " WHEN `bae_date` IS NOT NULL AND `delivery_date` IS NULL THEN `bae_date`"
             . " WHEN `customs_admission_date` IS NOT NULL AND `bae_date` IS NULL THEN `customs_admission_date`"
