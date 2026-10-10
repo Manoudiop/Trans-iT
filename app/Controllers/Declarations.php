@@ -21,11 +21,26 @@ class Declarations extends BaseController
         $model = new DeclarationLines();
         $lignes = $model->forFolder($folderId);
 
+        // ?ligne=<id> bascule le formulaire en modification plutôt que d'en
+        // afficher un par ligne: onze champs répétés sur chaque article
+        // rendraient la page illisible.
+        $edition = null;
+        $demande = $this->request->getGet("ligne");
+
+        if (!empty($demande)) {
+            $candidate = $model->find($demande);
+
+            if ($candidate !== null and (string) $candidate["folder_id"] === (string) $folder["id"]) {
+                $edition = $candidate;
+            }
+        }
+
         return view("declarations/index", [
             "folder" => $folder,
             "lignes" => $lignes,
             "totaux" => $model->totals($lignes),
             "prochaine" => $model->nextLineNo($folderId),
+            "edition" => $edition,
         ]);
     }
 
@@ -65,11 +80,18 @@ class Declarations extends BaseController
             ->with("message", "En-tête enregistré.");
     }
 
-    public function addLine()
+    /**
+     * Ajoute ou modifie une ligne, selon la présence d'un identifiant.
+     *
+     * Un seul point d'entrée pour les deux: les contrôles et la conversion
+     * des montants sont identiques, les dupliquer les ferait diverger.
+     */
+    public function saveLine()
     {
         $data = $this->request->getPost();
         $folder = $this->folder($data["folder_id"] ?? null);
         $model = new DeclarationLines();
+        $id = $data["id"] ?? null;
 
         $code = preg_replace("/[^0-9]/", "", (string) ($data["hs_code"] ?? ""));
 
@@ -78,22 +100,39 @@ class Declarations extends BaseController
                 ->with("error", "L'espèce tarifaire est obligatoire.");
         }
 
+        $valeurs = [
+            "line_no" => (int) ($data["line_no"] ?? 0) ?: $model->nextLineNo($folder["id"]),
+            "hs_code" => $code,
+            "description" => $data["description"] ?? null,
+            "origin" => strtoupper(trim((string) ($data["origin"] ?? ""))) ?: null,
+            "weight" => $this->montant($data["weight"] ?? null),
+            "fob_value" => $this->montant($data["fob_value"] ?? null),
+            "freight_value" => $this->montant($data["freight_value"] ?? null),
+            "insurance_value" => $this->montant($data["insurance_value"] ?? null),
+            "caf_value" => $this->montant($data["caf_value"] ?? null),
+            "complementary_quantity" => $data["complementary_quantity"] ?? null,
+            "container_chassis" => $data["container_chassis"] ?? null,
+            "reference" => $data["reference"] ?? null,
+        ];
+
         try {
-            $model->insert([
-                "folder_id" => $folder["id"],
-                "line_no" => (int) ($data["line_no"] ?? $model->nextLineNo($folder["id"])),
-                "hs_code" => $code,
-                "description" => $data["description"] ?? null,
-                "origin" => strtoupper(trim((string) ($data["origin"] ?? ""))) ?: null,
-                "weight" => $this->montant($data["weight"] ?? null),
-                "fob_value" => $this->montant($data["fob_value"] ?? null),
-                "freight_value" => $this->montant($data["freight_value"] ?? null),
-                "insurance_value" => $this->montant($data["insurance_value"] ?? null),
-                "caf_value" => $this->montant($data["caf_value"] ?? null),
-                "complementary_quantity" => $data["complementary_quantity"] ?? null,
-                "container_chassis" => $data["container_chassis"] ?? null,
-                "reference" => $data["reference"] ?? null,
-            ]);
+            if (!empty($id)) {
+                $existante = $model->find($id);
+
+                // Le modèle est cloisonné, mais rien n'empêcherait de viser
+                // une ligne appartenant à un autre dossier de la même agence.
+                if ($existante === null or (string) $existante["folder_id"] !== (string) $folder["id"]) {
+                    throw new PageNotFoundException("Ligne introuvable sur ce dossier.");
+                }
+
+                $model->update($id, $valeurs);
+                $message = "Ligne ART" . $valeurs["line_no"] . " modifiée.";
+            } else {
+                $model->insert($valeurs + ["folder_id" => $folder["id"]]);
+                $message = "Ligne ajoutée.";
+            }
+        } catch (PageNotFoundException $th) {
+            throw $th;
         } catch (\Throwable $th) {
             return redirect()->back()->withInput()->with("error", $th->getMessage());
         }
@@ -104,7 +143,7 @@ class Declarations extends BaseController
 
         return redirect()
             ->to("dossiers/declaration/" . $folder["id"])
-            ->with("message", "Ligne ajoutée.");
+            ->with("message", $message);
     }
 
     public function deleteLine()

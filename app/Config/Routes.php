@@ -55,7 +55,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('declaration/(:num)', 'Declarations::index/$1');
     $routes->get('declaration/(:num)/imprimer', 'Declarations::print/$1');
     $routes->post('declaration/entete', 'Declarations::saveHeader');
-    $routes->post('declaration/ligne', 'Declarations::addLine');
+    $routes->post('declaration/ligne', 'Declarations::saveLine');
     $routes->post('declaration/supprimer-ligne', 'Declarations::deleteLine');
     $routes->get('corbeille', 'TransitFolders::trash');
     $routes->post('restaurer', 'TransitFolders::restore');

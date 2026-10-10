@@ -125,8 +125,12 @@ $ecartPoids = $poidsColis > 0 ? $totaux["poids"] - $poidsColis : null;
                   <td class="text-end"><?= $nb($l["insurance_value"]) ?></td>
                   <td class="text-end"><strong><?= $nb($l["caf_value"]) ?></strong></td>
                   <td><?= esc($l["container_chassis"] ?: "-") ?></td>
-                  <td class="text-end">
-                    <?= form_open("dossiers/declaration/supprimer-ligne") ?>
+                  <td class="text-end text-nowrap">
+                    <a class="btn btn-sm <?= ($edition and $edition["id"] === $l["id"]) ? "btn-primary" : "" ?>"
+                       href="<?= base_url("dossiers/declaration/" . $folder["id"] . "?ligne=" . $l["id"]) ?>#ligne">
+                      Modifier
+                    </a>
+                    <?= form_open("dossiers/declaration/supprimer-ligne", ["class" => "d-inline"]) ?>
                     <input type="hidden" name="id" value="<?= esc($l["id"]) ?>">
                     <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
                     <?= form_close() ?>
@@ -151,70 +155,86 @@ $ecartPoids = $poidsColis > 0 ? $totaux["poids"] - $poidsColis : null;
     </div>
   </div>
 
-  <div class="card">
+  <?php
+  // En modification, les champs sont pré-remplis depuis la ligne; sinon on
+  // repasse par set_value pour ne pas perdre la saisie après une erreur.
+  $v = static function (string $champ, string $defaut = "") use ($edition) {
+      return $edition !== null ? (string) ($edition[$champ] ?? "") : set_value($champ, $defaut);
+  };
+  ?>
+
+  <div class="card <?= $edition ? "border-primary" : "" ?>" id="ligne">
     <div class="card-body">
-      <div class="card-title">Ajouter une ligne</div>
+      <div class="card-title d-flex justify-content-between align-items-center">
+        <span><?= $edition ? "Modifier la ligne ART" . esc($edition["line_no"]) : "Ajouter une ligne" ?></span>
+        <?php if ($edition) : ?>
+          <a class="btn btn-sm" href="<?= base_url("dossiers/declaration/" . $folder["id"]) ?>">Annuler</a>
+        <?php endif ?>
+      </div>
       <?= form_open("dossiers/declaration/ligne") ?>
       <input type="hidden" name="folder_id" value="<?= esc($folder["id"]) ?>">
+      <?php if ($edition) : ?>
+        <input type="hidden" name="id" value="<?= esc($edition["id"]) ?>">
+      <?php endif ?>
       <div class="row">
         <div class="col-md-1 mb-3">
           <label class="form-label" for="line_no">ART</label>
           <input type="number" min="1" name="line_no" id="line_no" class="form-control"
-                 value="<?= set_value("line_no", (string) $prochaine) ?>">
+                 value="<?= $v("line_no", (string) $prochaine) ?>">
         </div>
         <div class="col-md-3 mb-3">
           <label class="form-label" for="hs_code">Espèce tarifaire*</label>
           <input required type="text" name="hs_code" id="hs_code" class="form-control"
-                 placeholder="2009903000" value="<?= set_value("hs_code") ?>">
+                 placeholder="2009903000" value="<?= $v("hs_code") ?>">
           <small class="form-hint">Chiffres seuls, les séparateurs sont retirés.</small>
         </div>
         <div class="col-md-4 mb-3">
           <label class="form-label" for="description">Nature</label>
           <input type="text" name="description" id="description" class="form-control"
-                 placeholder="Jus multivitaminé" value="<?= set_value("description") ?>">
+                 placeholder="Jus multivitaminé" value="<?= $v("description") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="origin">Origine</label>
           <input type="text" name="origin" id="origin" class="form-control"
-                 placeholder="GW" maxlength="10" value="<?= set_value("origin") ?>">
+                 placeholder="GW" maxlength="10" value="<?= $v("origin") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="weight">Poids (kg)</label>
-          <input type="text" name="weight" id="weight" class="form-control" value="<?= set_value("weight") ?>">
+          <input type="text" name="weight" id="weight" class="form-control" value="<?= $v("weight") ?>">
         </div>
 
         <div class="col-md-2 mb-3">
           <label class="form-label" for="fob_value">Valeur FOB</label>
-          <input type="text" name="fob_value" id="fob_value" class="form-control" value="<?= set_value("fob_value") ?>">
+          <input type="text" name="fob_value" id="fob_value" class="form-control" value="<?= $v("fob_value") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="freight_value">Valeur fret</label>
-          <input type="text" name="freight_value" id="freight_value" class="form-control" value="<?= set_value("freight_value") ?>">
+          <input type="text" name="freight_value" id="freight_value" class="form-control" value="<?= $v("freight_value") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="insurance_value">Assurance</label>
-          <input type="text" name="insurance_value" id="insurance_value" class="form-control" value="<?= set_value("insurance_value") ?>">
+          <input type="text" name="insurance_value" id="insurance_value" class="form-control" value="<?= $v("insurance_value") ?>">
           <small class="form-hint">Facultative.</small>
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="caf_value">CAF</label>
-          <input type="text" name="caf_value" id="caf_value" class="form-control" value="<?= set_value("caf_value") ?>">
+          <input type="text" name="caf_value" id="caf_value" class="form-control" value="<?= $v("caf_value") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="complementary_quantity">Q. complémentaire</label>
-          <input type="text" name="complementary_quantity" id="complementary_quantity" class="form-control" value="<?= set_value("complementary_quantity") ?>">
+          <input type="text" name="complementary_quantity" id="complementary_quantity" class="form-control" value="<?= $v("complementary_quantity") ?>">
         </div>
         <div class="col-md-2 mb-3">
           <label class="form-label" for="container_chassis">TC / CH</label>
-          <input type="text" name="container_chassis" id="container_chassis" class="form-control" value="<?= set_value("container_chassis") ?>">
+          <input type="text" name="container_chassis" id="container_chassis" class="form-control" value="<?= $v("container_chassis") ?>">
         </div>
         <div class="col-12 mb-3">
           <label class="form-label" for="reference">Référence</label>
           <input type="text" name="reference" id="reference" class="form-control"
-                 placeholder="324 0003 03 09" value="<?= set_value("reference") ?>">
+                 placeholder="324 0003 03 09" value="<?= $v("reference") ?>">
         </div>
         <div class="col-md-4 mx-auto text-center">
-          <button type="submit" class="btn btn-primary w-100">Ajouter la ligne</button>
+          <button type="submit" class="btn btn-primary w-100"><?= $edition ? "Enregistrer les modifications" : "Ajouter la ligne" ?></button>
         </div>
       </div>
       <?= form_close() ?>
