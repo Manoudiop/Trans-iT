@@ -21,6 +21,9 @@ Informations dossier Nº<?= $id ?>
       <i class="ti ti-file"></i> Facturer
     </a>
   <?php endif ?>
+  <a href="<?= base_url("dossiers/declaration/" . $id) ?>" class="d-flex align-items-center justify-content-center gap-1 btn btn-sm btn-primary">
+    <i class="ti ti-list-details"></i> Note de détail
+  </a>
   <a href="<?= base_url("dossiers/modifier/" . $id) ?>" class="d-flex align-items-center justify-content-center gap-1 btn btn-sm btn-warning">
     <i class="ti ti-edit"></i> Modifier
   </a>

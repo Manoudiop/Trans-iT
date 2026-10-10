@@ -52,6 +52,11 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('supprimer-fichier', 'TransitFolders::deleteFile');
     $routes->get('fichier/(:num)', 'TransitFolders::file/$1');
     $routes->get('suivi', 'TransitFolders::tracking');
+    $routes->get('declaration/(:num)', 'Declarations::index/$1');
+    $routes->get('declaration/(:num)/imprimer', 'Declarations::print/$1');
+    $routes->post('declaration/entete', 'Declarations::saveHeader');
+    $routes->post('declaration/ligne', 'Declarations::addLine');
+    $routes->post('declaration/supprimer-ligne', 'Declarations::deleteLine');
     $routes->get('corbeille', 'TransitFolders::trash');
     $routes->post('restaurer', 'TransitFolders::restore');
   });

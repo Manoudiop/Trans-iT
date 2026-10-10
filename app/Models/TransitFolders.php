@@ -14,6 +14,10 @@ class TransitFolders extends TenantModel
     protected $protectFields    = true;
     protected $allowedFields    = [
         'open_date',
+        // En-tête de la note de détail.
+        'provenance',
+        'customs_regime',
+        'agreement_number',
         'handling_agent',
         'repository',
         'orbus_number',
