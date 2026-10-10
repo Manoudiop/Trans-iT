@@ -39,6 +39,17 @@
       font-size: 18px;
     }
 
+    /*
+     * Le menu mesure 1108 px et le conteneur n'en fait plus que 960 sous
+     * 1200 px: sans cette règle, Tabler le garde sur une ligne et la
+     * dernière entrée dépasse hors de l'écran, inatteignable.
+     */
+    @media (max-width: 1199.98px) {
+      #navbar-menu .navbar-nav {
+        flex-wrap: wrap;
+      }
+    }
+
     #toastContainer {
       position: fixed;
       bottom: 20px;
@@ -70,6 +81,18 @@
             <?php endif ?>
           </a>
         </h1>
+        <?php // La recherche était sur la seconde barre, à côté du menu: les
+        // neuf entrées y occupaient 1108 px sur 1320 disponibles, et le
+        // champ passait à la ligne. Elle tient ici, où la place est libre. ?>
+        <form action="<?= base_url("dossiers") ?>" class="d-flex gap-1 my-2 my-md-0 ms-md-3 flex-grow-1 flex-md-grow-0 order-2 order-md-0">
+          <div class="input-icon flex-grow-1">
+            <span class="input-icon-addon">
+              <i class="ti ti-search"></i>
+            </span>
+            <input type="text" name="r" value="<?= (url_is("dossiers*") and is_string($_GET["r"] ?? null)) ? esc($_GET["r"]) : '' ?>" class="form-control" style="min-width: 180px;" placeholder="Numéro de dossier..." aria-label="Numéro de dossier">
+          </div>
+          <button type="submit" class="btn btn-primary">OK</button>
+        </form>
         <div class="navbar-nav flex-row order-md-last">
           <div class="nav-item d-none d-md-flex me-3">
             <div class="btn-list">
@@ -260,25 +283,6 @@
 
 
             </ul>
-            <div class="my-2 my-md-0 flex-grow-1 flex-md-grow-0 order-first order-md-last">
-              <form action="<?= base_url("dossiers") ?>" class="d-flex gap-1">
-                <div class="input-icon">
-                  <span class="input-icon-addon">
-                    <!-- Download SVG icon from http://tabler-icons.io/i/search -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                      <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                      <path d="M21 21l-6 -6" />
-                    </svg>
-                  </span>
-                  <input type="text" name="r" value="<?= (url_is("dossiers*") and is_string($_GET["r"] ?? null)) ? esc($_GET["r"]) : '' ?>" class="form-control" placeholder="Numéro de dossier..." aria-label="Numéro de dossier">
-                </div>
-                <button type="submit" class="btn btn-primary text-center">
-                  OK
-                </button>
-
-              </form>
-            </div>
           </div>
         </div>
       </div>
