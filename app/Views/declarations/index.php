@@ -46,8 +46,14 @@ $ecartPoids = $poidsColis > 0 ? $totaux["poids"] - $poidsColis : null;
         </div>
         <div class="col-md-3 mb-3">
           <label class="form-label" for="agreement_number">Agrément</label>
+          <?php // Vide, c'est celui de l'agence qui s'imprime: inutile de le
+          // ressaisir sur chaque dossier. ?>
           <input type="text" name="agreement_number" id="agreement_number" class="form-control"
+                 placeholder="<?= esc($agence["agreement_number"] ?? "") ?: "Nº d'agrément" ?>"
                  value="<?= esc($folder["agreement_number"] ?? "") ?>">
+          <?php if (!empty($agence["agreement_number"])) : ?>
+            <small class="form-hint">Celui de l'agence par défaut.</small>
+          <?php endif ?>
         </div>
         <div class="col-md-3 mx-auto text-center">
           <button type="submit" class="btn w-100">Enregistrer l'en-tête</button>

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\DeclarationLines;
+use App\Models\Tenants;
 use App\Models\TransitFolders as ModelsTransitFolders;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -41,6 +42,7 @@ class Declarations extends BaseController
             "totaux" => $model->totals($lignes),
             "prochaine" => $model->nextLineNo($folderId),
             "edition" => $edition,
+            "agence" => (new Tenants())->find(tenant_id()),
         ]);
     }
 
@@ -54,6 +56,9 @@ class Declarations extends BaseController
             "folder" => $folder,
             "lignes" => $lignes,
             "totaux" => $model->totals($lignes),
+            // L'agrément est celui de la maison, sauf exception portée par
+            // le dossier: la note imprimée doit en porter un dans les deux cas.
+            "agence" => (new Tenants())->find(tenant_id()),
         ]);
     }
 
@@ -68,7 +73,8 @@ class Declarations extends BaseController
             $model->update($folder["id"], [
                 "provenance" => $data["provenance"] ?? null,
                 "customs_regime" => $data["customs_regime"] ?? null,
-                "agreement_number" => $data["agreement_number"] ?? null,
+                // Vide vaut NULL: la note reprend alors l'agrément de l'agence.
+                "agreement_number" => trim((string) ($data["agreement_number"] ?? "")) ?: null,
                 "manifest" => $data["manifest"] ?? null,
             ]);
         } catch (\Throwable $th) {

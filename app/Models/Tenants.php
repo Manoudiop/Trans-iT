@@ -18,7 +18,7 @@ class Tenants extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = ["name", "slug", "active", "plan_id", "address", "phone", "ninea"];
+    protected $allowedFields    = ["name", "slug", "active", "plan_id", "address", "phone", "ninea", "agreement_number"];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -41,5 +41,6 @@ class Tenants extends Model
         "address" => "permit_empty|max_length[255]",
         "phone" => "permit_empty|max_length[50]",
         "ninea" => "permit_empty|max_length[50]",
+        "agreement_number" => "permit_empty|max_length[100]",
     ];
 }

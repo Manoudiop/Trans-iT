@@ -45,6 +45,9 @@ Facture Dossier Nº <?= $id ?>
       <?php if (!empty($agence["ninea"])) : ?>
         <div class="text-muted">NINEA <?= esc($agence["ninea"]) ?></div>
       <?php endif ?>
+      <?php if (!empty($agence["agreement_number"])) : ?>
+        <div class="text-muted">Agrément <?= esc($agence["agreement_number"]) ?></div>
+      <?php endif ?>
       <div class="h1 mb-0 mt-2"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
     </div>
   </div>

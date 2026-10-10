@@ -90,8 +90,13 @@ Note de détail Nº <?= $folder["id"] ?>
 
   <div class="row mt-3">
     <div class="col-6">
-      <?php if (!empty($folder["agreement_number"])) : ?>
-        <div>Agrément&nbsp;: <strong><?= esc($folder["agreement_number"]) ?></strong></div>
+      <?php
+      // Celui du dossier l'emporte: il n'est renseigné que pour un envoi
+      // dédouané sous l'agrément d'un confrère.
+      $agrement = $folder["agreement_number"] ?: ($agence["agreement_number"] ?? "");
+      ?>
+      <?php if (!empty($agrement)) : ?>
+        <div>Agrément&nbsp;: <strong><?= esc($agrement) ?></strong></div>
       <?php endif ?>
       <?php
       $references = array_filter(array_column($lignes, "reference"));

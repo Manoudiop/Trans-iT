@@ -37,6 +37,7 @@ class Agency extends BaseController
             "address" => $this->normalize($this->request->getPost("address")),
             "phone" => $this->normalize($this->request->getPost("phone")),
             "ninea" => $this->normalize($this->request->getPost("ninea")),
+            "agreement_number" => $this->normalize($this->request->getPost("agreement_number")),
         ];
 
         if (!$modele->update(tenant_id(), $data)) {
