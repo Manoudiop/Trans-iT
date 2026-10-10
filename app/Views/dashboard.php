@@ -19,10 +19,16 @@ Tableau de bord
             </div>
             <div class="col">
               <div class="font-weight-medium">
-                Chiffre d'affaires du mois
+                Facturé du mois
               </div>
               <div class="fs-2">
-                <?= number_format($sales_figures, 2, ",", " ") ?> FCFA
+                <?= number_format($sales_figures, 0, ",", " ") ?> FCFA
+              </div>
+              <div class="text-muted small">
+                dont produit <strong><?= number_format($revenue_figures, 0, ",", " ") ?> FCFA</strong>
+                <?php if ($sales_figures > 0) : ?>
+                  (<?= round($revenue_figures / $sales_figures * 100) ?> %)
+                <?php endif ?>
               </div>
             </div>
           </div>
@@ -294,8 +300,11 @@ Tableau de bord
           opacity: 1,
         },
         series: [{
-          name: "Chiffre d'affaire",
+          name: "Facturé (débours compris)",
           data: <?= json_encode($sales_chart) ?>,
+        }, {
+          name: "Produit de la maison",
+          data: <?= json_encode($revenue_chart) ?>,
         }, ],
         tooltip: {
           theme: "light",

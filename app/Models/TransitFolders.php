@@ -279,19 +279,69 @@ class TransitFolders extends TenantModel
      */
     public function monthlySales(int $year): array
     {
-        $rows = $this->select("MONTH(invoice_date) AS mois, SUM(invoice_amount) AS total")
+        return array_column($this->monthlyTurnover($year), "facture");
+    }
+
+    /**
+     * Facturé et produit, par mois.
+     *
+     * Les deux ne se confondent pas: invoice_amount additionne les
+     * trente-trois postes, débours compris. L'essentiel de ce montant est de
+     * l'argent avancé pour le compte du client, qui ne fait que transiter.
+     * Le produit de la maison, c'est sa rémunération.
+     *
+     * @return array<int, array{facture: float, produit: float}> Indexé de 1 à 12.
+     */
+    public function monthlyTurnover(int $year): array
+    {
+        $invoicing = config(Invoicing::class);
+
+        $rows = $this->select(
+            "MONTH(`invoice_date`) AS mois,"
+            . " SUM(`invoice_amount`) AS facture,"
+            . " SUM(" . $invoicing->remunerationSql() . ") AS produit",
+            false
+        )
             ->where("closed", true)
             ->where("YEAR(invoice_date)", $year)
             ->groupBy("MONTH(invoice_date)")
             ->findAll();
 
-        $parMois = array_fill(1, 12, 0.0);
+        $parMois = array_fill(1, 12, ["facture" => 0.0, "produit" => 0.0]);
 
         foreach ($rows as $row) {
-            $parMois[(int) $row["mois"]] = (float) $row["total"];
+            $parMois[(int) $row["mois"]] = [
+                "facture" => (float) $row["facture"],
+                "produit" => (float) $row["produit"],
+            ];
         }
 
         return $parMois;
+    }
+
+    /**
+     * Facturé et produit sur une période.
+     *
+     * @return array{facture: float, produit: float}
+     */
+    public function turnoverBetween(string $from, string $to): array
+    {
+        $invoicing = config(Invoicing::class);
+
+        $row = $this->select(
+            "SUM(`invoice_amount`) AS facture,"
+            . " SUM(" . $invoicing->remunerationSql() . ") AS produit",
+            false
+        )
+            ->where("closed", true)
+            ->where("invoice_date >=", $from)
+            ->where("invoice_date <=", $to)
+            ->first();
+
+        return [
+            "facture" => (float) ($row["facture"] ?? 0),
+            "produit" => (float) ($row["produit"] ?? 0),
+        ];
     }
 
     /**

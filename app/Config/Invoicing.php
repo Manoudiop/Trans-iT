@@ -69,8 +69,25 @@ class Invoicing extends BaseConfig
      */
     public function deboursSql(): string
     {
+        return $this->sumOf($this->debours());
+    }
+
+    /**
+     * Expression SQL sommant la rémunération propre de la maison.
+     *
+     * C'est le vrai produit de l'activité. Le montant facturé, lui, contient
+     * surtout de l'argent qui ne fait que transiter.
+     */
+    public function remunerationSql(): string
+    {
+        return $this->sumOf($this->remuneration);
+    }
+
+    /** @param list<string> $postes */
+    private function sumOf(array $postes): string
+    {
         $colonnes = array_filter(
-            $this->debours(),
+            $postes,
             static fn (string $poste): bool => preg_match("/^[a-z_]+$/", $poste) === 1
         );
 

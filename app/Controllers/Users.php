@@ -103,7 +103,9 @@ class Users extends BaseController
         $annee = (int) date("Y");
         $moisCourant = (int) date("m");
 
-        $sales_chart = array_values((new TransitFolders())->monthlySales($annee));
+        $parMois = (new TransitFolders())->monthlyTurnover($annee);
+        $sales_chart = array_values(array_column($parMois, "facture"));
+        $revenue_chart = array_values(array_column($parMois, "produit"));
 
         // Les mois à venir restent à null, comme avant: la courbe s'arrête au
         // mois courant au lieu de retomber à zéro.
@@ -111,8 +113,14 @@ class Users extends BaseController
         foreach ((new Clients())->monthlyCounts($annee) as $mois => $total) {
             $clients_chart[] = $mois <= $moisCourant ? $total : null;
         }
+        // Facturé et produit du mois en une requête: le premier contient les
+        // débours, le second est la rémunération réelle de la maison.
+        $duMois = (new TransitFolders())->turnoverBetween(date("Y-m-01"), date("Y-m-d"));
+
         return view("dashboard", [
-            "sales_figures" => (new Invoices())->getSalesFigures(date("Y-m-01"), date("Y-m-d")),
+            "sales_figures" => $duMois["facture"],
+            "revenue_figures" => $duMois["produit"],
+            "revenue_chart" => $revenue_chart,
             "clients_count" => (new Clients())->countAllResults(),
             "in_progress_folders_count" => (new TransitFolders())->where("closed", false)->countAllResults(),
             "month_folder" => (new TransitFolders())->where("MONTH(open_date)", date("m"))->where("YEAR(open_date)", date("Y"))->countAllResults(),
