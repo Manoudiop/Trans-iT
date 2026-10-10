@@ -73,6 +73,14 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('imprimer/(:num)', 'Invoices::print/$1');
   });
 
+  //tresorerie: caisse, banque, avances aux agents
+  $routes->group('tresorerie', ['filter' => 'canInvoice'], function ($routes) {
+    $routes->get('/', 'Treasury::index');
+    $routes->post('mouvement', 'Treasury::add');
+    $routes->post('supprimer', 'Treasury::delete');
+    $routes->post('compte', 'Treasury::addAccount');
+  });
+
   //console d'exploitation de la plateforme
   $routes->group('console', ['filter' => 'platformAdmin'], function ($routes) {
     $routes->get('/', 'Console::index');

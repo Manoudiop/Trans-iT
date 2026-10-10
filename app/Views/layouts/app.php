@@ -196,6 +196,18 @@
                   </div>
                 </li>
               <?php endif ?>
+              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
+                <li class="nav-item <?= url_is("tresorerie*") ? "active" : "" ?>">
+                  <a class="nav-link d-flex align-items-center" href="<?= base_url("tresorerie") ?>">
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                      <i class="ti ti-cash"></i>
+                    </span>
+                    <span class="nav-link-title">
+                      Trésorerie
+                    </span>
+                  </a>
+                </li>
+              <?php endif ?>
               <li class="nav-item dropdown <?= url_is("rapports*") ? "active" : "" ?>">
                 <a class="nav-link d-flex align-items-center" href="<?= base_url("rapports") ?>">
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->

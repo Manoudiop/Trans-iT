@@ -55,7 +55,9 @@ class Settlements extends BaseController
             $model->insert([
                 "folder_id" => $folder["id"],
                 "amount" => $montant,
-                "paid_at" => $data["paid_at"] ?: date("Y-m-d"),
+                // ?? et non accès direct: un champ absent du POST lèverait
+                // une ErrorException.
+                "paid_at" => ($data["paid_at"] ?? "") ?: date("Y-m-d"),
                 "method" => $data["method"] ?? null,
                 "reference" => $data["reference"] ?? null,
                 "note" => $data["note"] ?? null,
