@@ -289,8 +289,12 @@ class TransitFolders extends BaseController
     public function tracking()
     {
         $workflow = config(Workflow::class);
+        $filtre = $this->request->getGet("etape");
+        // Parenthèses obligatoires: « and » s'évalue après l'affectation.
+        $filtre = (is_string($filtre) && isset($workflow->stages[$filtre])) ? $filtre : null;
 
         $parEtape = array_fill_keys(array_keys($workflow->stages), []);
+        $lignes = [];
 
         foreach ((new ModelsTransitFolders())->tracked() as $folder) {
             $etape = $folder["stage"];
@@ -300,11 +304,23 @@ class TransitFolders extends BaseController
             }
 
             $parEtape[$etape][] = $folder;
+
+            $jours = $folder["stage_days"] === null ? null : (int) $folder["stage_days"];
+            $folder["en_retard"] = $workflow->isBlocked($etape, $jours);
+
+            // Sans filtre, on ne montre que ce qui dépasse: un tableau de
+            // deux cent cinquante lignes ne se lit pas, et la question posée
+            // est « où ça bloque », pas « que contient le portefeuille ».
+            if ($filtre === null ? $folder["en_retard"] : $etape === $filtre) {
+                $lignes[] = $folder;
+            }
         }
 
         return view("transit_folders/tracking", [
             "workflow" => $workflow,
             "parEtape" => $parEtape,
+            "lignes" => $lignes,
+            "filtre" => $filtre,
         ]);
     }
 

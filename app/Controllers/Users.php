@@ -12,6 +12,10 @@ use CodeIgniter\Exceptions\PageNotFoundException;
 
 class Users extends BaseController
 {
+    /** Lignes affichées par tableau sur le tableau de bord. */
+    private const DASHBOARD_ROWS = 10;
+
+
     public function index(): string
     {
         return view("login");
@@ -117,6 +121,9 @@ class Users extends BaseController
         // débours, le second est la rémunération réelle de la maison.
         $duMois = (new TransitFolders())->turnoverBetween(date("Y-m-01"), date("Y-m-d"));
 
+        $criticals = (new ControllersTransitFolders())->getCriticalFolders();
+        $nonFactures = (new TransitFolders())->where("invoiced", false)->findAll();
+
         return view("dashboard", [
             "sales_figures" => $duMois["facture"],
             "revenue_figures" => $duMois["produit"],
@@ -134,10 +141,14 @@ class Users extends BaseController
                 ->countAllResults(),
             "sales_chart" => $sales_chart,
             "clients_chart" => $clients_chart,
-            "criticals" => (new ControllersTransitFolders())->getCriticalFolders(),
-            "notInvoiced" => (new TransitFolders())
-                ->where("invoiced", false)
-                ->find()
+            // Le tableau de bord résume: il montre les plus urgents et
+            // renvoie vers la page dédiée pour le reste. Il envoyait
+            // auparavant quatre cent vingt-neuf lignes au navigateur.
+            "criticals" => array_slice($criticals, 0, self::DASHBOARD_ROWS),
+            "criticals_total" => count($criticals),
+            "notInvoiced" => array_slice($nonFactures, 0, self::DASHBOARD_ROWS),
+            "notInvoiced_total" => count($nonFactures),
+            "dashboard_rows" => self::DASHBOARD_ROWS
         ]);
     }
 

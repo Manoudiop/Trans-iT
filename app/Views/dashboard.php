@@ -127,7 +127,14 @@ Tableau de bord
 <div class="col-md-6">
   <div class="card card-sm">
     <div class="card-body">
-      <div class="card-title text-danger">Dossiers critiques (+72 Heures)</div>
+      <div class="card-title text-danger d-flex justify-content-between align-items-center">
+        <span>Dossiers au-delà du délai de leur étape</span>
+        <?php if ($criticals_total > $dashboard_rows) : ?>
+          <a class="btn btn-sm" href="<?= base_url("dossiers/suivi") ?>">
+            <?= $dashboard_rows ?> sur <?= $criticals_total ?> — tout voir
+          </a>
+        <?php endif ?>
+      </div>
       <div class="table-responsive card-table text-nowrap">
         <table id="criticals" class="table table-vcenter table-sm">
           <thead>
@@ -174,7 +181,14 @@ Tableau de bord
 <div class="col-md-6">
   <div class="card card-sm">
     <div class="card-body">
-      <div class="card-title">En attente de facturation</div>
+      <div class="card-title d-flex justify-content-between align-items-center">
+        <span>En attente de facturation</span>
+        <?php if ($notInvoiced_total > $dashboard_rows) : ?>
+          <a class="btn btn-sm" href="<?= base_url("factures/non-factures") ?>">
+            <?= $dashboard_rows ?> sur <?= $notInvoiced_total ?> — tout voir
+          </a>
+        <?php endif ?>
+      </div>
       <div class="table-responsive card-table text-nowrap">
         <table id="notInvoiced" class="table table-vcenter table-sm">
           <thead>

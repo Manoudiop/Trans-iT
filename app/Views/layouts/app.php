@@ -108,6 +108,29 @@
                   </a>
                 </li>
               <?php endif ?>
+              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
+                <li class="nav-item dropdown <?= (url_is("dossiers/suivi*") or url_is("factures/encours*") or url_is("tresorerie/rapprochement*")) ? "active" : "" ?>">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                      <i class="ti ti-target-arrow"></i>
+                    </span>
+                    <span class="nav-link-title">
+                      Pilotage
+                    </span>
+                  </a>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="<?= base_url("dossiers/suivi") ?>">
+                      Suivi d'exploitation
+                    </a>
+                    <a class="dropdown-item" href="<?= base_url("factures/encours") ?>">
+                      Suivi des avances
+                    </a>
+                    <a class="dropdown-item" href="<?= base_url("tresorerie/rapprochement") ?>">
+                      Décaissé contre facturé
+                    </a>
+                  </div>
+                </li>
+              <?php endif ?>
               <?php if (session()->userData["profile"] == "ADMIN") : ?>
                 <li class="nav-item dropdown <?= url_is("utilisateurs*") ? "active" : "" ?>">
                   <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
@@ -165,9 +188,6 @@
                   <a class="dropdown-item" href="<?= base_url("dossiers") ?>">
                     Lister les dossiers
                   </a>
-                  <a class="dropdown-item" href="<?= base_url("dossiers/suivi") ?>">
-                    Suivi d'exploitation
-                  </a>
                   <a class="dropdown-item" href="<?= base_url("dossiers/corbeille") ?>">
                     Corbeille
                   </a>
@@ -186,9 +206,6 @@
                   <div class="dropdown-menu">
                     <a class="dropdown-item" href="<?= base_url("factures") ?>">
                       Lister les dossiers facturés
-                    </a>
-                    <a class="dropdown-item" href="<?= base_url("factures/encours") ?>">
-                      Suivi des avances
                     </a>
                     <a class="dropdown-item" href="<?= base_url("factures/non-factures") ?>">
                       Lister les dossiers non facturés
