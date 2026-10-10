@@ -76,6 +76,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
   //tresorerie: caisse, banque, avances aux agents
   $routes->group('tresorerie', ['filter' => 'canInvoice'], function ($routes) {
     $routes->get('/', 'Treasury::index');
+    $routes->get('rapprochement', 'Treasury::reconciliation');
     $routes->post('mouvement', 'Treasury::add');
     $routes->post('supprimer', 'Treasury::delete');
     $routes->post('compte', 'Treasury::addAccount');

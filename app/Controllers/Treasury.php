@@ -33,6 +33,61 @@ class Treasury extends BaseController
         ]);
     }
 
+    /**
+     * Rapprochement décaissé / facturé.
+     *
+     * Trois situations méritent une action, et elles sont séparées parce
+     * qu'elles n'appellent pas la même: facturer, corriger la facture, ou
+     * compléter la saisie de caisse.
+     */
+    public function reconciliation()
+    {
+        $lignes = (new TransitFolders())->reconciliation();
+
+        $groupes = ["a_facturer" => [], "sous_facture" => [], "a_verifier" => [], "conformes" => []];
+        $totaux = ["a_facturer" => 0.0, "sous_facture" => 0.0, "a_verifier" => 0.0];
+        $sansSaisie = ["dossiers" => 0, "montant" => 0.0];
+
+        foreach ($lignes as $ligne) {
+            $ecart = (float) $ligne["ecart"];
+            $decaisse = (float) $ligne["decaisse"];
+
+            if (!$ligne["invoiced"] and $decaisse > 0) {
+                // De l'argent est sorti sans qu'aucune facture n'existe.
+                $groupes["a_facturer"][] = $ligne;
+                $totaux["a_facturer"] += $decaisse;
+                continue;
+            }
+
+            // Une facture sans aucun décaissement saisi n'est pas une
+            // anomalie: c'est de la donnée qui manque. Les compter comme des
+            // écarts noierait le signal sous l'historique — à la mise en
+            // service, la totalité du portefeuille apparaîtrait en alerte.
+            if ($decaisse <= 0) {
+                $sansSaisie["dossiers"]++;
+                $sansSaisie["montant"] += (float) $ligne["facture_debours"];
+                continue;
+            }
+
+            // Tolérance d'un franc: les arrondis ne sont pas des anomalies.
+            if ($ecart < -1) {
+                $groupes["sous_facture"][] = $ligne;
+                $totaux["sous_facture"] += -$ecart;
+            } elseif ($ecart > 1) {
+                $groupes["a_verifier"][] = $ligne;
+                $totaux["a_verifier"] += $ecart;
+            } else {
+                $groupes["conformes"][] = $ligne;
+            }
+        }
+
+        return view("treasury/reconciliation", [
+            "groupes" => $groupes,
+            "totaux" => $totaux,
+            "sansSaisie" => $sansSaisie,
+        ]);
+    }
+
     public function add()
     {
         $data = $this->request->getPost();

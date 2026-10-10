@@ -5,6 +5,9 @@ Trésorerie
 <?= $this->section('h1'); ?>
 Caisse et banque
 <?= $this->endSection(); ?>
+<?= $this->section('add'); ?>
+<a href="<?= base_url("tresorerie/rapprochement") ?>" class="btn">Décaissé contre facturé</a>
+<?= $this->endSection(); ?>
 <?= $this->section('cols'); ?>
 
 <?php $fcfa = static fn ($m): string => number_format((float) $m, 0, ",", " "); ?>

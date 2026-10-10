@@ -145,6 +145,49 @@ class TransitFolders extends TenantModel
     }
 
     /**
+     * Rapprochement entre les débours facturés et les sommes réellement
+     * décaissées, dossier par dossier.
+     *
+     * C'est le contrôle qui transforme la saisie de trésorerie en argent
+     * récupéré: une surestarie payée mais oubliée à la facturation, ou un
+     * débours refacturé au mauvais montant, se voient ici et nulle part
+     * ailleurs.
+     *
+     * Ne retient que les dossiers qui ont un décaissement ou une facture:
+     * les autres n'ont rien à rapprocher.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function reconciliation(): array
+    {
+        $debours = config(Invoicing::class)->deboursSql();
+
+        return $this->select(
+            "`transit_folders`.`id`, `transit_folders`.`bl`, `transit_folders`.`invoice_to`,"
+            . " `transit_folders`.`invoiced`, `transit_folders`.`closed`,"
+            . " `transit_folders`.`invoice_date`, `transit_folders`.`invoice_amount`,"
+            . " (" . $debours . ") AS facture_debours,"
+            . " COALESCE(d.`total`, 0) AS decaisse,"
+            . " (" . $debours . ") - COALESCE(d.`total`, 0) AS ecart",
+            false
+        )
+            // Sous-requête agrégée plutôt qu'une corrélée par ligne: le
+            // rapprochement doit rester consultable sur tout le portefeuille.
+            ->join(
+                "(SELECT `tenant_id`, `folder_id`, SUM(`amount`) AS total"
+                . " FROM `cash_movements`"
+                . " WHERE `kind` = 'depense' AND `folder_id` IS NOT NULL AND `deleted_at` IS NULL"
+                . " GROUP BY `tenant_id`, `folder_id`) d",
+                "d.`tenant_id` = `transit_folders`.`tenant_id` AND d.`folder_id` = `transit_folders`.`id`",
+                "left",
+                false
+            )
+            ->where("(d.`total` IS NOT NULL OR `transit_folders`.`invoiced` = 1)", null, false)
+            ->orderBy("ecart", "asc")
+            ->findAll();
+    }
+
+    /**
      * Encours par client: factures émises et non encaissées.
      *
      * Sépare le total facturé de la part de débours — la trésorerie
