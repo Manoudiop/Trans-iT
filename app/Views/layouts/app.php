@@ -83,6 +83,10 @@
               </div>
             </a>
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+              <?php if (session()->userData["profile"] == "ADMIN") : ?>
+                <a href="<?= base_url("agence") ?>" class="dropdown-item d-flex gap-2 align-items-center"><i class="ti ti-building-store"></i> Paramètres de l'agence</a>
+                <div class="dropdown-divider"></div>
+              <?php endif ?>
               <a href="#" class="dropdown-item btn d-flex gap-2 align-items-center" data-bs-toggle="modal" data-bs-target="#modalIdResetPassword"><i class="ti ti-lock"></i> Modifier mon mot de passe</a>
               <a href="mailto:yankeesuprem@gmail.com" class="dropdown-item d-flex gap-2 align-items-center"><i class="ti ti-headset"></i> Support</a>
               <a href="<?= base_url("deconnexion") ?>" class="dropdown-item d-flex gap-2 align-items-center"><i class="ti ti-power"></i> Se déconnecter</a>

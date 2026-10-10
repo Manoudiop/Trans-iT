@@ -10,7 +10,7 @@ class Clients extends TenantModel
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ["name", "account_number", "email", "phone"];
+    protected $allowedFields    = ["name", "account_number", "email", "phone", "ninea", "ppm"];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

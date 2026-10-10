@@ -15,6 +15,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
   $routes->get('tableau-de-bord', 'Users::dashboard');
   $routes->post('edit-password', 'Users::editPwd');
 
+  //parametres de l'agence connectee
+  $routes->group('agence', ['filter' => 'adminOnly'], function ($routes) {
+    $routes->get('/', 'Agency::profile');
+    $routes->post('/', 'Agency::save');
+  });
+
   //user management
   $routes->group('utilisateurs', ['filter' => 'userManagement'], function ($routes) {
     $routes->get('/', 'Users::list');

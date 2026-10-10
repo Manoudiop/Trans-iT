@@ -59,6 +59,15 @@ class Clients extends BaseController
         $modele = new ModelsClients();
         $data = $this->request->getPost();
 
+        // Un identifiant facultatif laissé vide vaut NULL. Sinon la chaîne
+        // vide s'enregistre, et « NINEA renseigné » devient indistinguable
+        // de « NINEA absent » sur la facture.
+        foreach (["ninea", "ppm"] as $facultatif) {
+            if (isset($data[$facultatif])) {
+                $data[$facultatif] = trim($data[$facultatif]) === "" ? null : trim($data[$facultatif]);
+            }
+        }
+
         if (isset($data["id"])) {
 
             //unique email validation

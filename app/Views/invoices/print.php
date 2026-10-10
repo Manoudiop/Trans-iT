@@ -34,7 +34,18 @@ Facture Dossier Nº <?= $id ?>
     </div>
     <div class=" flex-grow-1 text-center" style="max-width: 400px;">
       <div class="h1 mb-0"><?= esc($agence["name"] ?? "") ?></div>
-      <div class="h1 mb-0"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
+      <?php // Adresse, téléphone et NINEA se saisissent dans les paramètres
+      // de l'agence: une ligne vide ne s'imprime pas. ?>
+      <?php if (!empty($agence["address"])) : ?>
+        <div class="text-muted"><?= esc($agence["address"]) ?></div>
+      <?php endif ?>
+      <?php if (!empty($agence["phone"])) : ?>
+        <div class="text-muted">Tél. <?= esc($agence["phone"]) ?></div>
+      <?php endif ?>
+      <?php if (!empty($agence["ninea"])) : ?>
+        <div class="text-muted">NINEA <?= esc($agence["ninea"]) ?></div>
+      <?php endif ?>
+      <div class="h1 mb-0 mt-2"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
     </div>
   </div>
 
@@ -58,7 +69,18 @@ Facture Dossier Nº <?= $id ?>
           <div class="mb-2"><small>Poids total en Kg</small> <br> <strong><?= $total_weight ?></strong></div>
         </div>
         <div class="col">
-          <div class="mb-2"><small>Clients</small> <br> <strong><?= esc($invoice_to["id"]) ?> <?= esc($invoice_to["name"]) ?></strong></div>
+          <div class="mb-2">
+            <small>Clients</small> <br>
+            <strong><?= esc($invoice_to["id"]) ?> <?= esc($invoice_to["name"]) ?></strong>
+            <?php // Identifiants fiscaux du client: propres aux entreprises,
+            // absents chez un particulier, donc affichés seulement s'ils sont là. ?>
+            <?php if (!empty($invoice_to["ninea"])) : ?>
+              <br><small>NINEA <?= esc($invoice_to["ninea"]) ?></small>
+            <?php endif ?>
+            <?php if (!empty($invoice_to["ppm"])) : ?>
+              <br><small>PPM <?= esc($invoice_to["ppm"]) ?></small>
+            <?php endif ?>
+          </div>
           <?php // Le poids total figurait deux fois, ici et dans la colonne des colis.
           // La déclaration, elle, est remontée du bas de l'en-tête: c'est la
           // référence que le client cite, elle se lit avec son nom. ?>

@@ -50,6 +50,19 @@ Clients
             <input required type="tel" class="form-control" name="phone" id="phone" value="<?= set_value("phone", $phone) ?>" placeholder="XXXXXXXX" />
           </div>
         </div>
+        <?php // Identifiants d'entreprise: un client particulier n'en a pas. ?>
+        <div class="col-md col-lg-4">
+          <div class="mb-3">
+            <label for="ninea" class="form-label">NINEA</label>
+            <input type="text" class="form-control" name="ninea" id="ninea" value="<?= set_value("ninea", $ninea ?? "") ?>" placeholder="facultatif" />
+          </div>
+        </div>
+        <div class="col-md col-lg-4">
+          <div class="mb-3">
+            <label for="ppm" class="form-label">PPM</label>
+            <input type="text" class="form-control" name="ppm" id="ppm" value="<?= set_value("ppm", $ppm ?? "") ?>" placeholder="facultatif" />
+          </div>
+        </div>
         <div class="col-12 mx-auto text-center">
           <button type="submit" class="btn btn-primary">
             Enregistrer les modifications

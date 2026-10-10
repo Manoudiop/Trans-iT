@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Filters\AdminOnly;
 use App\Filters\Auth;
 use App\Filters\CanInvoice;
 use App\Filters\PlatformAdmin;
@@ -44,6 +45,7 @@ class Filters extends BaseFilters
         'canInvoice' => CanInvoice::class,
         'tenant' => TenantResolution::class,
         'platformAdmin' => PlatformAdmin::class,
+        'adminOnly' => AdminOnly::class,
     ];
 
     /**

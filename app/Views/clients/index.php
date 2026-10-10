@@ -29,6 +29,8 @@ Clients
               <th>Numéro de compte</th>
               <th>Email</th>
               <th>Téléphone</th>
+              <th>NINEA</th>
+              <th>PPM</th>
               <th>Date de création</th>
               <th>Dernière modification</th>
             </tr>
@@ -51,6 +53,8 @@ Clients
                 <td><?= $client["account_number"] ?></td>
                 <td><?= $client["email"] ?></td>
                 <td><?= $client["phone"] ?></td>
+                <td><?= esc($client["ninea"] ?? "") ?: "-" ?></td>
+                <td><?= esc($client["ppm"] ?? "") ?: "-" ?></td>
                 <td data-order="<?= strtotime($client["created_at"]) ?>"><?= $client["created_at"] ? date("d/m/Y H:i:s", strtotime($client["created_at"])) : "-" ?></td>
                 <td data-order="<?= strtotime($client["updated_at"]) ?>"><?= $client["updated_at"] ? date("d/m/Y H:i:s", strtotime($client["updated_at"])) : "-" ?></td>
               </tr>
