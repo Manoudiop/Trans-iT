@@ -1,0 +1,172 @@
+/*
+ * Trans-iT — couleurs et densité.
+ *
+ * Chargé après Tabler, dont il ne fait que redéfinir les variables: aucune
+ * règle ne réécrit de composant, de sorte qu'une mise à jour du kit reste
+ * possible. Les documents imprimés (facture, note de détail, fiche de
+ * dossier) n'utilisent pas cette feuille: ils restent en noir sur blanc.
+ */
+
+:root {
+  /*
+   * Bleu plus profond que celui du kit (#206bc4), qui tirait vers le bleu
+   * de bouton générique. Contraste 7,1:1 sur blanc: lisible en texte de
+   * lien comme en fond de bouton.
+   */
+  --tblr-primary: #15548a;
+  --tblr-primary-rgb: 21, 84, 138;
+  --tblr-link-color-rgb: 21, 84, 138;
+  --tblr-link-hover-color-rgb: 15, 61, 101;
+
+  /*
+   * Fond légèrement plus soutenu et bordures plus nettes: les cartes
+   * blanches se détachaient à peine du fond précédent.
+   */
+  --tblr-body-bg: #eef2f7;
+  --tblr-border-color: #dbe2ec;
+  --tblr-border-color-translucent: rgba(24, 36, 51, .1);
+
+  /* Densité: le kit respire pour une vitrine, pas pour une journée de saisie. */
+  --tblr-card-spacer-x: 1.125rem;
+  --tblr-card-spacer-y: .875rem;
+  --tblr-card-cap-padding-y: .625rem;
+  --tblr-page-padding: 1rem;
+  --tblr-page-padding-y: .75rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Densité                                                             */
+/* ------------------------------------------------------------------ */
+
+/* L'en-tête de page occupait trois lignes pour un titre de deux mots. */
+.page-header {
+  padding-top: .875rem;
+  padding-bottom: .875rem;
+}
+
+.page-header .page-pretitle {
+  display: none;
+}
+
+.page-body {
+  margin-top: 1rem;
+}
+
+/* Les deux barres de navigation empilées mangeaient 140 px de haut. */
+.navbar {
+  min-height: 3.25rem;
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+}
+
+#navbar-menu .nav-link {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}
+
+/* Tableaux: l'essentiel des écrans de l'application. */
+.table > :not(caption) > * > * {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}
+
+.table thead th {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+  border-bottom-width: 2px;
+}
+
+/*
+ * Mesuré sur la liste des dossiers: la hauteur d'une ligne n'était pas
+ * fixée par le texte (17 px) mais par le bouton d'actions (34 px). Réduire
+ * le rembourrage des cellules sans toucher à ce bouton ne gagnait rien.
+ */
+.table td .dropdown > .btn,
+.table td > .btn {
+  --tblr-btn-padding-y: .125rem;
+  --tblr-btn-padding-x: .375rem;
+}
+
+.table td .dropdown > .btn i.ti,
+.table td > .btn i.ti {
+  font-size: 16px;
+}
+
+/*
+ * Chiffres à chasse fixe: sans cela les montants d'une colonne ne
+ * s'alignent pas verticalement, et comparer deux encours d'un coup d'œil
+ * devient impossible.
+ */
+.table td,
+.table th,
+.card .h1,
+.card .h2,
+.card .h3 {
+  font-variant-numeric: tabular-nums;
+}
+
+.card-title {
+  margin-bottom: .625rem;
+}
+
+.form-label {
+  margin-bottom: .25rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Couleurs                                                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Pastilles d'état en teinte plutôt qu'en aplat.
+ *
+ * « EN COURS » en orange vif et « NON » en rouge vif se répétaient sur
+ * chaque ligne de chaque liste: l'écran criait en permanence et les
+ * vraies alertes se noyaient dedans. La teinte garde la couleur lisible
+ * sans la hurler. Les alertes réelles — lignes et cartes bordées de
+ * rouge — conservent, elles, leur aplat.
+ */
+.badge.bg-success,
+.badge.bg-warning,
+.badge.bg-danger,
+.badge.bg-secondary {
+  --tblr-bg-opacity: .14;
+  border: 1px solid rgba(var(--tblr-badge-tint-rgb), .25);
+  font-weight: 600;
+}
+
+.badge.bg-success {
+  --tblr-badge-color: #1a7a3c;
+  --tblr-badge-tint-rgb: 47, 179, 68;
+}
+
+.badge.bg-warning {
+  --tblr-badge-color: #9a4a06;
+  --tblr-badge-tint-rgb: 247, 103, 7;
+}
+
+.badge.bg-danger {
+  --tblr-badge-color: #a82626;
+  --tblr-badge-tint-rgb: 214, 57, 57;
+}
+
+.badge.bg-secondary {
+  --tblr-badge-color: #4a5668;
+  --tblr-badge-tint-rgb: 102, 115, 130;
+}
+
+/* Les lignes signalées restent franches: c'est leur raison d'être. */
+.table-danger {
+  --tblr-table-bg: #fdeaea;
+}
+
+/* Cartes: un trait plutôt qu'une ombre, plus net sur fond clair. */
+.card {
+  border-color: var(--tblr-border-color);
+  box-shadow: none;
+}
+
+.navbar {
+  box-shadow: none;
+  border-bottom: 1px solid var(--tblr-border-color);
+}

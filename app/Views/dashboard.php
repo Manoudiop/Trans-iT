@@ -262,9 +262,11 @@ Tableau de bord
         grid: {
           strokeDashArray: 4,
         },
+        // Import et export ne sont ni un échec ni une réussite: le rouge et
+        // le vert leur donnaient un jugement qu'ils n'ont pas.
         colors: [
-          tabler.getColor("danger"),
-          tabler.getColor("success"),
+          tabler.getColor("primary"),
+          tabler.getColor("teal"),
         ],
         legend: {
           show: true,
