@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Config\Invoicing;
+
 class TransitFolders extends TenantModel
 {
     protected $table            = 'transit_folders';
@@ -140,6 +142,50 @@ class TransitFolders extends TenantModel
         return $this->onlyDeleted()
             ->where("bl", $bl)
             ->first();
+    }
+
+    /**
+     * Encours par client: factures émises et non encaissées.
+     *
+     * Sépare le total facturé de la part de débours — la trésorerie
+     * réellement sortie — et ventile par antériorité. Tout est agrégé en une
+     * requête: la balance âgée d'une maison de transit se consulte souvent,
+     * elle ne doit pas coûter un parcours de table.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function outstandingByClient(): array
+    {
+        $invoicing = config(Invoicing::class);
+
+        $select = "`invoice_to` AS client_id,"
+            . " COUNT(*) AS factures,"
+            . " SUM(`invoice_amount`) AS encours,"
+            . " SUM(" . $invoicing->deboursSql() . ") AS debours,"
+            . " MIN(`invoice_date`) AS plus_ancienne,"
+            . " MAX(DATEDIFF(CURDATE(), `invoice_date`)) AS jours_max";
+
+        foreach ($invoicing->aging as $cle => $tranche) {
+            // Les clés viennent de la configuration, mais elles deviennent
+            // des alias SQL: on refuse tout ce qui n'est pas un identifiant.
+            if (preg_match("/^[a-z0-9_]+$/", (string) $cle) !== 1) {
+                continue;
+            }
+
+            $condition = $tranche["to"] === null
+                ? "DATEDIFF(CURDATE(), `invoice_date`) >= " . (int) $tranche["from"]
+                : "DATEDIFF(CURDATE(), `invoice_date`) BETWEEN " . (int) $tranche["from"] . " AND " . (int) $tranche["to"];
+
+            $select .= ", SUM(CASE WHEN " . $condition . " THEN `invoice_amount` ELSE 0 END) AS " . $cle;
+        }
+
+        return $this->select($select, false)
+            ->where("invoiced", true)
+            ->where("receipt_date", null)
+            ->where("check_date", null)
+            ->groupBy("invoice_to")
+            ->orderBy("encours", "desc")
+            ->findAll();
     }
 
     /**

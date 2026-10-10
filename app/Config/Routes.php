@@ -60,6 +60,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
   $routes->group('factures', ['filter' => 'canInvoice'], function ($routes) {
     $routes->get('/', 'Invoices::index');
     $routes->get('non-factures', 'Invoices::notInvoiced');
+    $routes->get('encours', 'Invoices::outstanding');
     $routes->get('facturer/(:num)', 'Invoices::invoicePage/$1');
     $routes->post('facturer/(:num)', 'Invoices::invoice/$1');
     $routes->get('modifier/(:num)', 'Invoices::editPage/$1');

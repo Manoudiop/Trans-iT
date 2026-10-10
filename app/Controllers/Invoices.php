@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\Clients;
 use App\Models\TransitFolders;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\I18n\Time;
@@ -22,6 +23,40 @@ class Invoices extends BaseController
             "invoices" => $modele
                 ->where("invoiced", true)
                 ->find()
+        ]);
+    }
+
+    /**
+     * Suivi des avances: ce que chaque client doit, et depuis quand.
+     *
+     * Une maison de transit décaisse les droits, le magasinage et les
+     * surestaries avant d'être payée. Savoir combien de trésorerie est
+     * immobilisée, chez qui et depuis quand, pèse plus lourd au quotidien
+     * que le chiffre d'affaires.
+     */
+    public function outstanding()
+    {
+        $lignes = (new TransitFolders())->outstandingByClient();
+
+        // Les noms de clients en une requête, pas une par ligne.
+        $noms = [];
+        $ids = array_values(array_filter(array_column($lignes, "client_id")));
+        if ($ids !== []) {
+            $noms = array_column(
+                (new Clients())->whereIn("id", $ids)->findAll(),
+                "name",
+                "id"
+            );
+        }
+
+        foreach ($lignes as &$ligne) {
+            $ligne["client_nom"] = $noms[$ligne["client_id"]] ?? "INFORMATIONS INDISPONIBLES";
+        }
+        unset($ligne);
+
+        return view("invoices/outstanding", [
+            "lignes" => $lignes,
+            "invoicing" => config(\Config\Invoicing::class),
         ]);
     }
 

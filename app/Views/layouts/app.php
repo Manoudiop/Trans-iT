@@ -187,6 +187,9 @@
                     <a class="dropdown-item" href="<?= base_url("factures") ?>">
                       Lister les dossiers facturés
                     </a>
+                    <a class="dropdown-item" href="<?= base_url("factures/encours") ?>">
+                      Suivi des avances
+                    </a>
                     <a class="dropdown-item" href="<?= base_url("factures/non-factures") ?>">
                       Lister les dossiers non facturés
                     </a>
