@@ -7,83 +7,113 @@ use CodeIgniter\Config\BaseConfig;
 /**
  * Nature des postes de facturation.
  *
- * Une facture de transit mélange deux choses de nature opposée:
+ * Le découpage reproduit celui de la facture imprimée, qui fait foi: c'est
+ * ce que le client reçoit sur papier, et une application qui classerait
+ * autrement produirait des chiffres impossibles à rapprocher de ses propres
+ * factures.
  *
- *  - les DÉBOURS, décaissés par la maison pour le compte du client et
- *    refacturés à l'identique — droits et taxes, magasinage, surestaries,
- *    fret. C'est de la trésorerie sortie, à récupérer.
- *  - la RÉMUNÉRATION de la maison — commissions et honoraires. C'est de la
- *    marge, pas une avance.
+ * Trois sections, reprises de app/Views/invoices/print.php:
  *
- * Le suivi des avances ne vaut que si les deux sont séparés: un encours de
- * dix millions dont neuf de débours n'a pas le même sens qu'un encours de
- * dix millions d'honoraires.
+ *  - DÉBOURS: décaissés pour le compte du client et refacturés à
+ *    l'identique. C'est la trésorerie sortie, à récupérer.
+ *  - INTERVENTIONS: camionnage et groupage, prestations facturées à part.
+ *  - RÉMUNÉRATION: commissions, honoraires et taxes sur prestations. C'est
+ *    le produit de la maison.
  *
- * Tout poste non listé ci-dessous est traité comme un débours. C'est le
- * choix prudent: il vaut mieux surestimer la trésorerie à récupérer que la
- * sous-estimer.
+ * H.A.D Ad Valorem et T.P.S figurent en rémunération parce que la facture
+ * les y place, aux côtés des commissions et honoraires.
  */
 class Invoicing extends BaseConfig
 {
-    /**
-     * Postes constituant la rémunération propre de la maison.
-     *
-     * À vérifier et compléter selon vos pratiques: la frontière n'est pas la
-     * même partout, notamment pour les frais de dédouanement et les
-     * formalités, qui sont tantôt refacturés à l'identique, tantôt facturés
-     * comme prestation.
-     */
+    /** Refacturés à l'identique au client. */
+    public array $debours = [
+        "duties_taxes",
+        "agios",
+        "freight",
+        "bl_stamp",
+        "shipping_taxe",
+        "boarding_disembarkation",
+        "storing_guarding",
+        "container_transportation",
+        "handling",
+        "insurance",
+        "transportation",
+        "expert_report",
+        "customs_excort",
+        "demurrage",
+        "customs_clearance",
+        "postal_package_withdrawal_fees",
+        "customs_ts_visit",
+        "full_land_rental",
+        "visit_admissibility",
+        "indirect_fees",
+        "orbus_fees",
+    ];
+
+    /** Prestations facturées à part sur la facture. */
+    public array $interventions = [
+        "trucking",
+        "grouping",
+    ];
+
+    /** Produit propre de la maison. */
     public array $remuneration = [
+        "commission_on_disbursements",
+        "folder_opening_fees",
         "transit_commission",
         "customs_honorary_fees",
-        "folder_opening_fees",
-        "commission_on_disbursements",
+        "had",
+        "internal_handling",
+        "loading_unloading",
+        "printer",
+        "procedures_formalities",
+        "tps",
     ];
 
-    /** Tous les postes de la facture, dans l'ordre du formulaire. */
-    public array $postes = [
-        "duties_taxes", "agios", "bl_stamp", "shipping_taxe",
-        "boarding_disembarkation", "storing_guarding", "container_transportation",
-        "handling", "insurance", "transportation", "expert_report",
-        "customs_excort", "demurrage", "customs_clearance",
-        "postal_package_withdrawal_fees", "customs_ts_visit", "full_land_rental",
-        "visit_admissibility", "indirect_fees", "orbus_fees", "trucking",
-        "grouping", "commission_on_disbursements", "folder_opening_fees",
-        "transit_commission", "customs_honorary_fees", "had",
-        "internal_handling", "loading_unloading", "printer",
-        "procedures_formalities", "tps", "freight",
-    ];
-
-    /** Postes refacturés à l'identique. */
-    public function debours(): array
+    /** Tous les postes de la facture. */
+    public function postes(): array
     {
-        return array_values(array_diff($this->postes, $this->remuneration));
+        return array_merge($this->debours, $this->interventions, $this->remuneration);
     }
 
     /**
-     * Expression SQL sommant les débours d'une ligne.
+     * Postes présents en base mais classés nulle part.
      *
-     * Les noms viennent de cette configuration, jamais d'une requête: ce sont
-     * des constantes du code. Le filtre sur $postes garantit qu'une faute de
-     * frappe dans $remuneration ne fabrique pas d'identifiant inattendu.
+     * Un poste oublié disparaîtrait silencieusement des totaux: la page
+     * d'encours le signale plutôt que de laisser l'écart passer.
+     *
+     * @param  list<string> $colonnes Colonnes de frais de transit_folders
+     * @return list<string>
      */
+    public function unclassified(array $colonnes): array
+    {
+        return array_values(array_diff($colonnes, $this->postes()));
+    }
+
     public function deboursSql(): string
     {
-        return $this->sumOf($this->debours());
+        return $this->sumOf($this->debours);
     }
 
-    /**
-     * Expression SQL sommant la rémunération propre de la maison.
-     *
-     * C'est le vrai produit de l'activité. Le montant facturé, lui, contient
-     * surtout de l'argent qui ne fait que transiter.
-     */
+    public function interventionsSql(): string
+    {
+        return $this->sumOf($this->interventions);
+    }
+
     public function remunerationSql(): string
     {
         return $this->sumOf($this->remuneration);
     }
 
-    /** @param list<string> $postes */
+    /**
+     * Expression SQL sommant une liste de postes.
+     *
+     * Les noms viennent de cette configuration, jamais d'une requête: ce sont
+     * des constantes du code. Le filtre garantit qu'une faute de frappe ne
+     * fabrique pas d'identifiant inattendu.
+     *
+     * @param list<string> $postes
+     */
     private function sumOf(array $postes): string
     {
         $colonnes = array_filter(

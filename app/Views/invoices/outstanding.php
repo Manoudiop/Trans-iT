@@ -78,8 +78,10 @@ foreach ($lignes as $ligne) {
       <div class="card-title"><?= count($lignes) ?> client(s) avec un encours</div>
       <p class="text-muted">
         Les débours sont la trésorerie réellement sortie pour le compte du client —
-        droits et taxes, magasinage, surestaries, fret. Le reste est la rémunération
-        de la maison. La nature de chaque poste se règle dans <code>Config\Invoicing</code>.
+        droits et taxes, magasinage, surestaries, fret. Le solde restant comprend aussi
+        les interventions (camionnage, groupage) et la rémunération de la maison.
+        Le découpage reprend les trois sections de la facture imprimée et se règle
+        dans <code>Config\Invoicing</code>.
       </p>
 
       <?php if ($lignes === []) : ?>
