@@ -26,11 +26,14 @@ Facture Dossier Nº <?= $id ?>
 
   <div class="d-flex justify-content-between align-items-center py-3">
     <div>
-      <img src="<?= base_url("logo.png") ?>" height="100px" width="100px" alt="Logo">
+      <?php // public/logo.png n'existe pas: afficher la balise imprimait une
+      // image cassée sur la facture remise au client. ?>
+      <?php if (is_file(FCPATH . "logo.png")) : ?>
+        <img src="<?= base_url("logo.png") ?>" height="100px" width="100px" alt="Logo">
+      <?php endif ?>
     </div>
     <div class=" flex-grow-1 text-center" style="max-width: 400px;">
-      <div class="h1 mb-0">Nom de l'entreprise</div>
-      <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo, natus! A atque quidem quae non necessitatibus ipsa, perferendis </p>
+      <div class="h1 mb-0"><?= esc($agence["name"] ?? "") ?></div>
       <div class="h1 mb-0"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
     </div>
   </div>
@@ -42,21 +45,27 @@ Facture Dossier Nº <?= $id ?>
     <div class="col-12">
       <div class="row">
         <div class="col">
-          <div class="mb-2"><small>CNT/LTA</small> <br> <strong><?= $bl ?></strong> du <strong><?= date("d/m/Y", strtotime($bl_of)) ?></strong></div>
-          <div class="mb-2"><small>Vol/Navire</small> <br> <strong><?= $boat ?></strong> du <strong><?= date("d/m/Y", strtotime($boat_of)) ?></strong></div>
+          <?php
+          // strtotime(null) vaut 0, donc une date vide s'imprimait
+          // « 01/01/1970 » sur la facture remise au client.
+          $leDate = static fn ($valeur): string => empty($valeur) ? "-" : date("d/m/Y", strtotime($valeur));
+          ?>
+          <div class="mb-2"><small>CNT/LTA</small> <br> <strong><?= $bl ?></strong> du <strong><?= $leDate($bl_of) ?></strong></div>
+          <div class="mb-2"><small>Vol/Navire</small> <br> <strong><?= $boat ?></strong> du <strong><?= $leDate($boat_of) ?></strong></div>
         </div>
         <div class="col">
           <div class="mb-2"><small>Nombre de colis</small> <br> <strong><?= $items_count ?></strong></div>
           <div class="mb-2"><small>Poids total en Kg</small> <br> <strong><?= $total_weight ?></strong></div>
         </div>
         <div class="col">
-          <div class="mb-2"><small>Clients</small> <br> <strong><?= $invoice_to["id"] ?> <?= $invoice_to["name"] ?></strong></div>
-          <div class="mb-2"><small>Poids total en Kg</small> <br> <strong><?= $total_weight ?></strong></div>
+          <div class="mb-2"><small>Clients</small> <br> <strong><?= esc($invoice_to["id"]) ?> <?= esc($invoice_to["name"]) ?></strong></div>
+          <?php // Le poids total figurait deux fois, ici et dans la colonne des colis.
+          // La déclaration, elle, est remontée du bas de l'en-tête: c'est la
+          // référence que le client cite, elle se lit avec son nom. ?>
+          <div class="mb-2"><small>Déclaration</small> <br> <strong><?= esc($declaration ?: "-") ?></strong></div>
         </div>
         <div class="col-12">
-          <div class="mb-2"><small>Désignation</small> <br> <strong><?= $designation ?></strong></div>
-          <div class="mb-2"><small>Déclaration</small> <br> <strong><?= $declaration ?></strong></div>
-
+          <div class="mb-2"><small>Désignation</small> <br> <strong><?= esc($designation) ?></strong></div>
         </div>
       </div>
     </div>
@@ -220,7 +229,7 @@ Facture Dossier Nº <?= $id ?>
           </tr>
 
           <tr>
-            <th colspan="2">INTERVENTIONS NON TAXABLES</th>
+            <th colspan="2">INTERVENTIONS TAXABLES</th>
           </tr>
           <?php if ($commission_on_disbursements) : ?>
             <tr>

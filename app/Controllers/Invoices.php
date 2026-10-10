@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\Clients;
+use App\Models\Tenants;
 use App\Models\TransitFolders;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\I18n\Time;
@@ -184,6 +185,10 @@ class Invoices extends BaseController
         if (!$invoice) {
             throw new PageNotFoundException("Dossier Nº" . $id . " introuvable.");
         }
+
+        // L'en-tête portait un nom d'entreprise et un texte de remplissage
+        // écrits en dur. Chaque agence doit voir le sien.
+        $invoice["agence"] = (new Tenants())->find(tenant_id());
 
         return view("invoices/print", $invoice);
     }
