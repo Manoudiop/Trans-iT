@@ -19,7 +19,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
   $routes->group('agence', ['filter' => 'adminOnly'], function ($routes) {
     $routes->get('/', 'Agency::profile');
     $routes->post('/', 'Agency::save');
+    $routes->post('logo', 'Agency::uploadLogo');
+    $routes->post('logo/supprimer', 'Agency::deleteLogo');
   });
+  // Hors du groupe reserve a l'administrateur: le logo s'affiche dans la
+  // mise en page et sur les factures, donc pour tous les comptes.
+  $routes->get('logo-agence', 'Agency::logo');
 
   //user management
   $routes->group('utilisateurs', ['filter' => 'userManagement'], function ($routes) {

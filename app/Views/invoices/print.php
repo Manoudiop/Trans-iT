@@ -26,10 +26,11 @@ Facture Dossier Nº <?= $id ?>
 
   <div class="d-flex justify-content-between align-items-center py-3">
     <div>
-      <?php // public/logo.png n'existe pas: afficher la balise imprimait une
-      // image cassée sur la facture remise au client. ?>
-      <?php if (is_file(FCPATH . "logo.png")) : ?>
-        <img src="<?= base_url("logo.png") ?>" height="100px" width="100px" alt="Logo">
+      <?php // Le logo appartient à l'agence et se dépose dans ses paramètres.
+      // Sans logo, aucune balise: une image cassée sur une facture remise au
+      // client est pire que pas de logo du tout. ?>
+      <?php if (agency_logo_url()) : ?>
+        <img src="<?= agency_logo_url() ?>" style="max-height: 100px; max-width: 200px;" alt="<?= esc($agence["name"] ?? "") ?>">
       <?php endif ?>
     </div>
     <div class=" flex-grow-1 text-center" style="max-width: 400px;">

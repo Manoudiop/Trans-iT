@@ -18,7 +18,7 @@ class Tenants extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = ["name", "slug", "active", "plan_id", "address", "phone", "ninea", "agreement_number"];
+    protected $allowedFields    = ["name", "slug", "active", "plan_id", "address", "phone", "ninea", "agreement_number", "logo_path"];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

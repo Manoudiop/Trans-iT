@@ -69,21 +69,65 @@ Paramètres de l'agence
 
   <div class="card mt-3">
     <div class="card-body">
+      <div class="card-title">Logo</div>
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center mb-3 mb-md-0">
+          <?php if (agency_logo_url()) : ?>
+            <img src="<?= agency_logo_url() ?>" alt="Logo de l'agence" style="max-height: 120px; max-width: 100%;">
+          <?php else : ?>
+            <div class="text-muted border rounded p-4">Aucun logo</div>
+          <?php endif ?>
+        </div>
+        <div class="col-md-8">
+          <?= form_open_multipart("agence/logo") ?>
+          <?= csrf_field() ?>
+          <div class="mb-2">
+            <label for="logo" class="form-label">Déposer une image</label>
+            <input type="file" class="form-control" name="logo" id="logo"
+              accept="image/png,image/jpeg,image/gif,image/webp" required>
+            <small class="form-hint">
+              PNG, JPEG, GIF ou WebP, 500 Ko au maximum. Le SVG n'est pas accepté:
+              il peut contenir du code. Le logo s'affiche dans le bandeau de
+              l'application et sur vos factures.
+            </small>
+          </div>
+          <button type="submit" class="btn btn-primary">Enregistrer le logo</button>
+          <?= form_close() ?>
+          <?php if (!empty($agence["logo_path"])) : ?>
+            <?= form_open("agence/logo/supprimer", ["class" => "d-inline"]) ?>
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-danger mt-2">Retirer le logo</button>
+            <?= form_close() ?>
+          <?php endif ?>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-body">
       <div class="card-title">Aperçu de l'en-tête de facture</div>
-      <div class="border rounded p-3 text-end">
-        <div class="h2 mb-0"><?= esc($agence["name"]) ?></div>
-        <?php if (!empty($agence["address"])) : ?>
-          <div><?= esc($agence["address"]) ?></div>
-        <?php endif ?>
-        <?php if (!empty($agence["phone"])) : ?>
-          <div>Tél. <?= esc($agence["phone"]) ?></div>
-        <?php endif ?>
-        <?php if (!empty($agence["ninea"])) : ?>
-          <div>NINEA <?= esc($agence["ninea"]) ?></div>
-        <?php endif ?>
-        <?php if (!empty($agence["agreement_number"])) : ?>
-          <div>Agrément <?= esc($agence["agreement_number"]) ?></div>
-        <?php endif ?>
+      <div class="border rounded p-3 d-flex justify-content-between align-items-center">
+        <div>
+          <?php if (agency_logo_url()) : ?>
+            <img src="<?= agency_logo_url() ?>" alt="" style="max-height: 70px;">
+          <?php endif ?>
+        </div>
+        <div class="text-end">
+          <div class="h2 mb-0"><?= esc($agence["name"]) ?></div>
+          <?php if (!empty($agence["address"])) : ?>
+            <div><?= esc($agence["address"]) ?></div>
+          <?php endif ?>
+          <?php if (!empty($agence["phone"])) : ?>
+            <div>Tél. <?= esc($agence["phone"]) ?></div>
+          <?php endif ?>
+          <?php if (!empty($agence["ninea"])) : ?>
+            <div>NINEA <?= esc($agence["ninea"]) ?></div>
+          <?php endif ?>
+          <?php if (!empty($agence["agreement_number"])) : ?>
+            <div>Agrément <?= esc($agence["agreement_number"]) ?></div>
+          <?php endif ?>
+        </div>
       </div>
       <?php if (empty($agence["address"]) || empty($agence["ninea"])) : ?>
         <div class="text-muted small mt-2">

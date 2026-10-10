@@ -23,18 +23,32 @@ Dossier Nº <?= $id ?>
   <!-- header -->
   <div class="d-flex justify-content-between align-items-center py-3">
     <div>
-      <img src="<?= base_url("logo.png") ?>" height="100px" width="100px" alt="Logo">
+      <?php if (agency_logo_url()) : ?>
+        <img src="<?= agency_logo_url() ?>" style="max-height: 100px; max-width: 200px;" alt="<?= esc(agency()["name"] ?? "") ?>">
+      <?php endif ?>
     </div>
     <div class=" flex-grow-1 text-center" style="max-width: 400px;">
-      <div class="h1 mb-0">Nom de l'entreprise</div>
-      <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo, natus! A atque quidem quae non necessitatibus ipsa, perferendis </p>
-      <div class="h1 mb-0"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
+      <?php // Cette fiche portait, elle aussi, un nom d'entreprise et un
+      // texte de remplissage écrits en dur. ?>
+      <div class="h1 mb-0"><?= esc(agency()["name"] ?? "") ?></div>
+      <?php if (!empty(agency()["address"])) : ?>
+        <div class="text-muted"><?= esc(agency()["address"]) ?></div>
+      <?php endif ?>
+      <?php if (!empty(agency()["phone"])) : ?>
+        <div class="text-muted">Tél. <?= esc(agency()["phone"]) ?></div>
+      <?php endif ?>
+      <div class="h1 mb-0 mt-2"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
     </div>
   </div>
 
+  <?php
+  // strtotime(null) vaut 0: une date absente s'imprimait « 01/01/1970 ».
+  $leDate = static fn ($valeur): string => empty($valeur) ? "-" : date("d/m/Y", strtotime($valeur));
+  ?>
+
   <div class="row">
     <div class="col">
-      <div class="mb-2"><small>Date d'ouverture</small><br /><strong><?= date("d/m/Y", strtotime($open_date)) ?></strong></div>
+      <div class="mb-2"><small>Date d'ouverture</small><br /><strong><?= $leDate($open_date) ?></strong></div>
       <div class="mb-2"><small>Agent Traitant</small><br /><strong><?= $handling_agent ?></strong></div>
     </div>
     <div class="col">
@@ -47,10 +61,10 @@ Dossier Nº <?= $id ?>
         <div class="col">
           <div class="mb-2"><small>Orbus Nº</small> <br> <strong><?= $orbus_number ?></strong></div>
           <div class="mb-2"><small>Expéditeur</small> <br> <strong><?= $expeditor ?></strong></div>
-          <div class="mb-2"><small>CNT/LTA</small> <br> <strong><?= $bl ?></strong> du <strong><?= date("d/m/Y", strtotime($bl_of)) ?></strong></div>
+          <div class="mb-2"><small>CNT/LTA</small> <br> <strong><?= $bl ?></strong> du <strong><?= $leDate($bl_of) ?></strong></div>
         </div>
         <div class="col">
-          <div class="mb-2"><small>Navire/Vol</small> <br> <strong><?= $boat ?></strong> du <strong><?= date("d/m/Y", strtotime($boat_of)) ?></strong></div>
+          <div class="mb-2"><small>Navire/Vol</small> <br> <strong><?= $boat ?></strong> du <strong><?= $leDate($boat_of) ?></strong></div>
           <div class="mb-2"><small>Manifeste</small> <br> <strong><?= $manifest ?></strong> Art <strong><?= $article ?></strong></div>
           <div class="mb-2"><small>Déclaration</small> <br> <strong><?= $declaration ?></strong></div>
         </div>

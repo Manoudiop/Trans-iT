@@ -23,7 +23,7 @@
   <link href="<?= base_url("pack/css/tabler-vendors.min.css?1684106062") ?>" rel="stylesheet" />
   <link href="<?= base_url("pack/css/demo.min.css?1684106062") ?>" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="shortcut icon" href="<?= base_url("logo.png") ?>" type="image/x-icon">
+  <link rel="shortcut icon" href="<?= agency_logo_url() ?? base_url("favicon.ico") ?>">
   <style>
     @import url('https://rsms.me/inter/inter.css');
 
@@ -61,7 +61,13 @@
         </button>
         <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
           <a href="<?= base_url("tableau-de-bord") ?>">
-            <img src="<?= base_url("logo.png") ?>" height="40" width="40" alt="Tabler" class="navbar-brand-image">
+            <?php // Chaque agence dépose son logo dans ses paramètres; sans
+            // logo, son nom tient lieu d'enseigne. ?>
+            <?php if (agency_logo_url()) : ?>
+              <img src="<?= agency_logo_url() ?>" height="40" alt="<?= esc(agency()["name"] ?? "") ?>" class="navbar-brand-image">
+            <?php else : ?>
+              <span class="text-reset"><?= esc(agency()["name"] ?? "Trans It!") ?></span>
+            <?php endif ?>
           </a>
         </h1>
         <div class="navbar-nav flex-row order-md-last">
