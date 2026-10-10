@@ -89,6 +89,13 @@ class TransitFoldersDemo extends Seeder
                 "invoice_author" => null,
                 "invoice_date" => null,
                 "reference" => null,
+                // Jalons du parcours: ce sont eux qui déterminent l'étape
+                // affichée par le suivi d'exploitation.
+                "transit_order_date" => null,
+                "customs_admission_date" => null,
+                "bae_date" => null,
+                "delivery_date" => null,
+                "receipt_date" => null,
             ]
         );
 
@@ -98,12 +105,20 @@ class TransitFoldersDemo extends Seeder
             $sequence++;
 
             $id = sprintf("%04d%02d%05d", $year, $month, $sequence);
-            $closed = random_int(0, 100) < 70;
-            $invoiced = $closed && random_int(0, 100) < 80;
+            $ouverture = sprintf("%04d-%02d-%02d", $year, $month, $day);
+
+            // Avancement dans le parcours, de l'ouverture au règlement. Sans
+            // cette progression, tous les dossiers resteraient à la première
+            // étape et le suivi d'exploitation n'aurait rien à montrer.
+            $etape = random_int(0, 6);
+            $jalon = static fn (int $jours): string => date("Y-m-d", strtotime($ouverture . " +" . $jours . " days"));
+
+            $invoiced = $etape >= 5;
+            $closed = $etape >= 6;
 
             $folder = array_merge($template, [
                 "id" => $id,
-                "open_date" => sprintf("%04d-%02d-%02d", $year, $month, $day),
+                "open_date" => $ouverture,
                 "bl" => "BL-" . $year . "-" . str_pad((string) $sequence, 6, "0", STR_PAD_LEFT),
                 "type" => random_int(0, 1) ? "IMP" : "EXP",
                 "invoice_to" => $clientIds[array_rand($clientIds)],
@@ -113,9 +128,26 @@ class TransitFoldersDemo extends Seeder
                 "invoiced" => $invoiced ? 1 : 0,
             ]);
 
+            if ($etape >= 1) {
+                $folder["transit_order_date"] = $jalon(random_int(1, 4));
+            }
+            if ($etape >= 2) {
+                $folder["customs_admission_date"] = $jalon(random_int(4, 9));
+            }
+            if ($etape >= 3) {
+                $folder["bae_date"] = $jalon(random_int(8, 16));
+            }
+            if ($etape >= 4) {
+                $folder["delivery_date"] = $jalon(random_int(10, 20));
+            }
+            if ($etape >= 6) {
+                $folder["receipt_date"] = $jalon(random_int(25, 60));
+            }
+
             if ($invoiced) {
                 $folder["invoice_author"] = $userIds[array_rand($userIds)];
-                $folder["invoice_date"] = $folder["open_date"];
+                // La facture suit la livraison, elle ne la précède pas.
+                $folder["invoice_date"] = $jalon(random_int(14, 24));
                 $folder["reference"] = "FAC-" . $year . "-" . str_pad((string) $sequence, 6, "0", STR_PAD_LEFT);
                 // Quelques postes seulement sont renseignés sur une facture
                 // réelle, pas les trente-trois.

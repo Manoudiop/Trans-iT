@@ -165,6 +165,9 @@
                   <a class="dropdown-item" href="<?= base_url("dossiers") ?>">
                     Lister les dossiers
                   </a>
+                  <a class="dropdown-item" href="<?= base_url("dossiers/suivi") ?>">
+                    Suivi d'exploitation
+                  </a>
                   <a class="dropdown-item" href="<?= base_url("dossiers/corbeille") ?>">
                     Corbeille
                   </a>

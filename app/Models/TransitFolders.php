@@ -143,6 +143,73 @@ class TransitFolders extends TenantModel
     }
 
     /**
+     * Expression SQL donnant l'étape courante d'un dossier.
+     *
+     * L'ordre des branches va de la plus avancée à la plus précoce: la
+     * première vraie l'emporte. L'étape se déduit des dates déjà saisies,
+     * elle n'est donc jamais à ressaisir ni à resynchroniser.
+     */
+    private static function stageSql(): string
+    {
+        return "CASE"
+            . " WHEN `invoiced` = 1 AND `receipt_date` IS NULL AND `check_date` IS NULL THEN 'a_encaisser'"
+            . " WHEN `delivery_date` IS NOT NULL AND `invoiced` = 0 THEN 'a_facturer'"
+            . " WHEN `bae_date` IS NOT NULL AND `delivery_date` IS NULL THEN 'a_livrer'"
+            . " WHEN `customs_admission_date` IS NOT NULL AND `bae_date` IS NULL THEN 'en_douane'"
+            . " WHEN `transit_order_date` IS NOT NULL AND `customs_admission_date` IS NULL THEN 'a_declarer'"
+            . " ELSE 'ouvert' END";
+    }
+
+    /** Date d'entrée dans l'étape courante, mêmes branches que stageSql(). */
+    private static function stageSinceSql(): string
+    {
+        return "CASE"
+            . " WHEN `invoiced` = 1 AND `receipt_date` IS NULL AND `check_date` IS NULL THEN `invoice_date`"
+            . " WHEN `delivery_date` IS NOT NULL AND `invoiced` = 0 THEN `delivery_date`"
+            . " WHEN `bae_date` IS NOT NULL AND `delivery_date` IS NULL THEN `bae_date`"
+            . " WHEN `customs_admission_date` IS NOT NULL AND `bae_date` IS NULL THEN `customs_admission_date`"
+            . " WHEN `transit_order_date` IS NOT NULL AND `customs_admission_date` IS NULL THEN `transit_order_date`"
+            . " ELSE `open_date` END";
+    }
+
+    /**
+     * Nombre de dossiers en cours par étape.
+     *
+     * @return array<string, int>
+     */
+    public function stageCounts(): array
+    {
+        $rows = $this->select(self::stageSql() . " AS stage, COUNT(*) AS total", false)
+            ->where("closed", false)
+            ->groupBy("stage")
+            ->findAll();
+
+        return array_map("intval", array_column($rows, "total", "stage"));
+    }
+
+    /**
+     * Dossiers en cours, avec leur étape et le temps passé dedans.
+     *
+     * Les dossiers clos sont exclus: le suivi d'exploitation ne porte que sur
+     * ce qui demande encore une action.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function tracked(): array
+    {
+        return $this->select(
+            "`transit_folders`.*,"
+            . " " . self::stageSql() . " AS stage,"
+            . " " . self::stageSinceSql() . " AS stage_since,"
+            . " DATEDIFF(CURDATE(), " . self::stageSinceSql() . ") AS stage_days",
+            false
+        )
+            ->where("closed", false)
+            ->orderBy("stage_days", "desc")
+            ->findAll();
+    }
+
+    /**
      * Chiffre d'affaires facturé, par mois, pour une année.
      *
      * Une requête groupée au lieu de douze appels successifs qui chargeaient

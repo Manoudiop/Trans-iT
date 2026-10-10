@@ -8,6 +8,7 @@ use App\Models\TransitFiles;
 use App\Models\TransitFolderItems;
 use App\Models\TransitFolders as ModelsTransitFolders;
 use CodeIgniter\Exceptions\PageNotFoundException;
+use Config\Workflow;
 
 class TransitFolders extends BaseController
 {
@@ -278,15 +279,54 @@ class TransitFolders extends BaseController
             ->with("message", "Dossier Nº" . $id . " restauré.");
     }
 
+    /**
+     * Suivi d'exploitation: les dossiers en cours, groupés par étape.
+     *
+     * Répond à la question du matin — où ça bloque, et depuis combien de
+     * temps — là où une liste triée par date d'ouverture ne dit rien de
+     * l'étape à laquelle le dossier est coincé.
+     */
+    public function tracking()
+    {
+        $workflow = config(Workflow::class);
+
+        $parEtape = array_fill_keys(array_keys($workflow->stages), []);
+
+        foreach ((new ModelsTransitFolders())->tracked() as $folder) {
+            $etape = $folder["stage"];
+
+            if (!isset($parEtape[$etape])) {
+                $parEtape[$etape] = [];
+            }
+
+            $parEtape[$etape][] = $folder;
+        }
+
+        return view("transit_folders/tracking", [
+            "workflow" => $workflow,
+            "parEtape" => $parEtape,
+        ]);
+    }
+
+    /**
+     * Dossiers dépassant le seuil de leur étape.
+     *
+     * L'ancienne règle retenait tout dossier ouvert depuis plus de trois
+     * jours, sans distinguer l'étape: un dossier en douane depuis quatre
+     * jours était signalé au même titre qu'un dossier livré mais non enlevé,
+     * alors que le second fait courir des surestaries et pas le premier.
+     */
     public function getCriticalFolders()
     {
-        $model = new ModelsTransitFolders();
-        $currentDateMinus3Days = date('Y-m-d', strtotime('-3 days'));
-        $criticals = $model
-            ->where("closed", false)
-            ->where("open_date <", $currentDateMinus3Days)
-            ->find();
-        return $criticals;
+        $workflow = config(Workflow::class);
+
+        return array_values(array_filter(
+            (new ModelsTransitFolders())->tracked(),
+            static fn (array $folder): bool => $workflow->isBlocked(
+                $folder["stage"],
+                $folder["stage_days"] === null ? null : (int) $folder["stage_days"]
+            )
+        ));
     }
 
     public function addFile()

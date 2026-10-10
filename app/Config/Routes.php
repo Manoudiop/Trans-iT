@@ -51,6 +51,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('ajouter-fichier', 'TransitFolders::addFile');
     $routes->post('supprimer-fichier', 'TransitFolders::deleteFile');
     $routes->get('fichier/(:num)', 'TransitFolders::file/$1');
+    $routes->get('suivi', 'TransitFolders::tracking');
     $routes->get('corbeille', 'TransitFolders::trash');
     $routes->post('restaurer', 'TransitFolders::restore');
   });
