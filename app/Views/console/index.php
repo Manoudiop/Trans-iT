@@ -7,7 +7,7 @@ Console d'exploitation
 <?= $this->endSection(); ?>
 <?= $this->section('cols'); ?>
 
-<div class="col">
+<div class="col-12 d-block">
   <div class="card">
     <div class="card-body">
       <div class="card-title">

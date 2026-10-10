@@ -24,7 +24,7 @@ foreach ($parEtape as $etape => $dossiers) {
 }
 ?>
 
-<div class="col-12">
+<div class="col-12 d-block">
   <div class="row row-cards mb-3">
     <?php foreach ($parEtape as $etape => $dossiers) : ?>
       <?php

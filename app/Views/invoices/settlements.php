@@ -17,7 +17,7 @@ $regle = (float) $folder["paid_amount"];
 $pourcent = $facture > 0 ? min(100, round($regle / $facture * 100)) : 0;
 ?>
 
-<div class="col-12">
+<div class="col-12 d-block">
   <div class="row row-cards mb-3">
     <div class="col-sm-4">
       <div class="card">

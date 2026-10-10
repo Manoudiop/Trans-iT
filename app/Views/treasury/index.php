@@ -12,7 +12,13 @@ Caisse et banque
 
 <?php $fcfa = static fn ($m): string => number_format((float) $m, 0, ",", " "); ?>
 
-<div class="col-12">
+<?php
+// d-block est indispensable: le gabarit enveloppe cette section dans
+// « row-deck », qui applique display:flex à chaque colonne. Sans cette
+// classe, les cartes empilées ici deviennent des colonnes côte à côte et la
+// première s'écrase à zéro.
+?>
+<div class="col-12 d-block">
   <div class="row row-cards mb-3">
     <?php foreach ($comptes as $compte) : ?>
       <div class="col-sm-6 col-lg-3">

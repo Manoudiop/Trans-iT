@@ -17,7 +17,7 @@ $poidsColis = (float) ($folder["total_weight"] ?? 0);
 $ecartPoids = $poidsColis > 0 ? $totaux["poids"] - $poidsColis : null;
 ?>
 
-<div class="col-12">
+<div class="col-12 d-block">
   <div class="card mb-3">
     <div class="card-body">
       <div class="card-title">En-tête</div>

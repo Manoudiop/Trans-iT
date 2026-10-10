@@ -111,7 +111,14 @@ class TransitFoldersDemo extends Seeder
             // cette progression, tous les dossiers resteraient à la première
             // étape et le suivi d'exploitation n'aurait rien à montrer.
             $etape = random_int(0, 6);
-            $jalon = static fn (int $jours): string => date("Y-m-d", strtotime($ouverture . " +" . $jours . " days"));
+            // Jamais au-delà d'aujourd'hui: une date de jalon dans le futur
+            // produit des anciennetés négatives dans le suivi et la balance
+            // âgée, ce qui ressemble à un défaut de l'application.
+            $jalon = static function (int $jours) use ($ouverture): string {
+                $date = strtotime($ouverture . " +" . $jours . " days");
+
+                return date("Y-m-d", min($date, time()));
+            };
 
             $invoiced = $etape >= 5;
             $closed = $etape >= 6;

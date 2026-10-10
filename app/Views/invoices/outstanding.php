@@ -32,7 +32,7 @@ foreach ($lignes as $ligne) {
 }
 ?>
 
-<div class="col-12">
+<div class="col-12 d-block">
   <div class="row row-cards mb-3">
     <div class="col-sm-6 col-lg-3">
       <div class="card">

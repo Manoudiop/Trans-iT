@@ -35,7 +35,7 @@ $blocs = [
 ];
 ?>
 
-<div class="col-12">
+<div class="col-12 d-block">
   <div class="row row-cards mb-3">
     <?php foreach ($blocs as $cle => $bloc) : ?>
       <div class="col-md-4">
