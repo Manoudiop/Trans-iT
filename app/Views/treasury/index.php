@@ -188,22 +188,38 @@ Caisse et banque
 
   <div class="card">
     <div class="card-body">
-      <div class="card-title">Journal — <?= count($journal) ?> dernier(s) mouvement(s)</div>
+      <?php $url = base_url("tresorerie"); ?>
+      <div class="card-title">
+        <?= $options->search !== "" ? "Journal — résultat de la recherche" : "Journal" ?>
+      </div>
+
+      <?php // La recherche et la pagination remplacent une lecture plafonnée
+      // à deux cents lignes: au-delà, les mouvements plus anciens
+      // disparaissaient sans que rien ne le signale. ?>
+      <?= view("partials/list_tools", [
+          "options" => $options,
+          "url" => $url,
+          "placeholder" => "Référence, note ou nº de dossier",
+      ]) ?>
 
       <?php if ($journal === []) : ?>
-        <div class="alert alert-info mb-0" role="alert">Aucun mouvement enregistré.</div>
+        <div class="alert alert-info mb-0" role="alert">
+          <?= $options->search !== ""
+              ? "Aucun mouvement ne correspond à « " . esc($options->search) . " »."
+              : "Aucun mouvement enregistré." ?>
+        </div>
       <?php else : ?>
         <div class="table-responsive card-table">
           <table class="table table-vcenter">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Nature</th>
-                <th>Catégorie</th>
+                <th><?= entete_triable("Date", "date", $options, $url) ?></th>
+                <th><?= entete_triable("Nature", "nature", $options, $url) ?></th>
+                <th><?= entete_triable("Catégorie", "categorie", $options, $url) ?></th>
                 <th>Dossier</th>
                 <th>Compte</th>
                 <th>Agent</th>
-                <th class="text-end">Montant</th>
+                <th class="text-end"><?= entete_triable("Montant", "montant", $options, $url) ?></th>
                 <th></th>
               </tr>
             </thead>
@@ -238,6 +254,8 @@ Caisse et banque
           </table>
         </div>
       <?php endif ?>
+
+      <?= view("partials/pager", ["pager" => $pager]) ?>
     </div>
   </div>
 </div>

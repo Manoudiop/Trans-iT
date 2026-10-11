@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ListOptions;
 use App\Models\CashAccounts;
 use App\Models\CashMovements;
 use App\Models\TransitFolders;
@@ -16,18 +17,39 @@ use Config\Cash;
  */
 class Treasury extends BaseController
 {
+    /** Colonnes sur lesquelles le journal accepte d'être trié. */
+    private const TRIS = [
+        "date" => "moved_at",
+        "nature" => "kind",
+        "categorie" => "category",
+        "montant" => "amount",
+    ];
+
     public function index()
     {
         $config = config(Cash::class);
         $mouvements = new CashMovements();
+        $options = new ListOptions($this->request, self::TRIS, "date");
 
-        $journal = $mouvements->journal();
+        if ($options->search !== "") {
+            // Parenthésé: sans cela le OR s'affranchirait du cloisonnement
+            // par agence.
+            $mouvements->groupStart()
+                ->like("reference", $options->search)
+                ->orLike("note", $options->search)
+                ->orLike("folder_id", $options->search)
+                ->groupEnd();
+        }
+
+        $journal = $mouvements->journal($options->column(), $options->dir, $options->perPage);
 
         return view("treasury/index", [
             "config" => $config,
             "comptes" => (new CashAccounts())->withBalances(),
             "detentions" => $this->namedHoldings($mouvements->agentHoldings()),
             "journal" => $journal,
+            "pager" => $mouvements->pager,
+            "options" => $options,
             "agents" => (new ModelsUsers())->orderBy("name", "asc")->findAll(),
             "noms" => $this->namesFor($journal),
         ]);

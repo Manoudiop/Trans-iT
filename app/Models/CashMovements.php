@@ -128,11 +128,21 @@ class CashMovements extends TenantModel
     }
 
     /** Journal, du plus récent au plus ancien. */
-    public function journal(int $limit = 200): array
+    /**
+     * Journal paginé.
+     *
+     * Remplace une lecture plafonnée à deux cents lignes, qui faisait
+     * disparaître les mouvements plus anciens sans rien dire: une agence
+     * saisissant vingt écritures par jour perdait la vue de son premier
+     * mois au bout de dix jours.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function journal(string $colonne, string $sens, int $parPage): array
     {
-        return $this->orderBy("moved_at", "desc")
+        return $this->orderBy($colonne, $sens)
             ->orderBy("id", "desc")
-            ->findAll($limit);
+            ->paginate($parPage);
     }
 
     /** Total des charges de fonctionnement sur une période. */
