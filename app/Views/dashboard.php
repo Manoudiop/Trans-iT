@@ -165,7 +165,9 @@ Tableau de bord
                     </div>
                   </div>
                 </td>
-                <td><?= date("d/m/Y", strtotime($folder["open_date"])) ?></td>
+                <td data-order="<?= $folder["open_date"] ? strtotime($folder["open_date"]) : 0 ?>">
+                  <?= $folder["open_date"] ? date("d/m/Y", strtotime($folder["open_date"])) : "-" ?>
+                </td>
                 <td><?= $folder["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
                 <td><?= $folder["invoiced"] ? "<span class='badge bg-success'>OUI</span>" : "<span class='badge bg-danger'>NON</span>" ?></td>
                 <td><?= $folder["id"]  ?> <?= $folder["type"] ?></td>
@@ -215,7 +217,9 @@ Tableau de bord
                     </div>
                   </div>
                 </td>
-                <td><?= date("d/m/Y", strtotime($invoice["open_date"])) ?></td>
+                <td data-order="<?= $invoice["open_date"] ? strtotime($invoice["open_date"]) : 0 ?>">
+                  <?= $invoice["open_date"] ? date("d/m/Y", strtotime($invoice["open_date"])) : "-" ?>
+                </td>
                 <td><?= $invoice["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
                 <td><?= $invoice["invoiced"] ? "<span class='badge bg-success'>OUI</span>" : "<span class='badge bg-danger'>NON</span>" ?></td>
                 <td><?= $invoice["id"]  ?> <?= $invoice["type"] ?></td>

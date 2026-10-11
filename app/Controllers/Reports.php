@@ -36,6 +36,8 @@ class Reports extends BaseController
             $folders = $modele
                 ->where("open_date >=", $req["from"])
                 ->where("open_date <=", $req["to"])
+                ->orderBy("open_date", "DESC")
+                ->orderBy("id", "DESC")
                 ->findAll();
         }
 
@@ -67,6 +69,8 @@ class Reports extends BaseController
             $invoices = $modele
                 ->where("invoice_date >=", $req["from"])
                 ->where("invoice_date <=", $req["to"])
+                ->orderBy("invoice_date", "DESC")
+                ->orderBy("id", "DESC")
                 ->findAll();
         }
 

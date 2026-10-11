@@ -55,7 +55,9 @@ Factures
                   </div>
                 </td>
                 <td><?= $invoice["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
-                <td><?= date("d/m/Y", strtotime($invoice["invoice_date"])) ?></td>
+                <td data-order="<?= $invoice["invoice_date"] ? strtotime($invoice["invoice_date"]) : 0 ?>">
+                  <?= $invoice["invoice_date"] ? date("d/m/Y", strtotime($invoice["invoice_date"])) : "-" ?>
+                </td>
                 <td><?= number_format($invoice["invoice_amount"], 2, ",", " ") ?></td>
                 <td><?= $invoice["id"]  ?> <?= $invoice["type"] ?></td>
                 <td><a target="_blank" href="<?= base_url("clients?r=" . $invoice["invoice_to"]["id"]) ?>"><?= $invoice["invoice_to"]["id"]  ?> <?= $invoice["invoice_to"]["name"]  ?><i class="ti ti-link"></i></a></td>

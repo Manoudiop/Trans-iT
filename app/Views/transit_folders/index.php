@@ -51,7 +51,13 @@ Dossiers
                     </div>
                   </div>
                 </td>
-                <td><?= date("d/m/Y", strtotime($folder["open_date"])) ?></td>
+                <?php // data-order: sans clé de tri, DataTables compare
+                // « 28/10/2026 » et « 27/10/2026 » comme du texte, donc le
+                // jour avant le mois. Un dossier du 27 octobre se retrouvait
+                // derrière un dossier du 28 février. ?>
+                <td data-order="<?= $folder["open_date"] ? strtotime($folder["open_date"]) : 0 ?>">
+                  <?= $folder["open_date"] ? date("d/m/Y", strtotime($folder["open_date"])) : "-" ?>
+                </td>
                 <td><?= $folder["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
                 <td><?= $folder["invoiced"] ? "<span class='badge bg-success'>OUI</span>" : "<span class='badge bg-danger'>NON</span>" ?></td>
                 <td><?= $folder["id"]  ?> <?= $folder["type"] ?></td>

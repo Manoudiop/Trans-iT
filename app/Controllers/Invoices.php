@@ -20,9 +20,12 @@ class Invoices extends BaseController
                 ->like("reference", $r)
                 ->orLike("id", $r);
         }
+        // Facture la plus récente en tête, comme la liste des dossiers.
         return view("invoices/index", [
             "invoices" => $modele
                 ->where("invoiced", true)
+                ->orderBy("invoice_date", "DESC")
+                ->orderBy("id", "DESC")
                 ->find()
         ]);
     }
@@ -67,6 +70,8 @@ class Invoices extends BaseController
         return view("invoices/notInvoiced", [
             "invoices" => $modele
                 ->where("invoiced", false)
+                ->orderBy("open_date", "DESC")
+                ->orderBy("id", "DESC")
                 ->find()
         ]);
     }

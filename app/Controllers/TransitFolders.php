@@ -22,7 +22,15 @@ class TransitFolders extends BaseController
                 ->like("id", $r);
         }
 
-        $folders = $model->find();
+        // Du plus récent au plus ancien: c'est le dossier d'hier qu'on
+        // vient chercher, pas celui de l'an dernier. L'identifiant
+        // départage les ouvertures du même jour, qu'une date seule laisse
+        // dans un ordre arbitraire.
+        $folders = $model
+            ->orderBy("open_date", "DESC")
+            ->orderBy("id", "DESC")
+            ->find();
+
         return view("transit_folders/index", [
             "folders" => $folders
         ]);

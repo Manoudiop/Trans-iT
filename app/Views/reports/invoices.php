@@ -103,7 +103,9 @@ Rapports des factures
                   </div>
                 </td>
                 <td><?= $invoice["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
-                <td><?= date("d/m/Y", strtotime($invoice["invoice_date"])) ?></td>
+                <td data-order="<?= $invoice["invoice_date"] ? strtotime($invoice["invoice_date"]) : 0 ?>">
+                  <?= $invoice["invoice_date"] ? date("d/m/Y", strtotime($invoice["invoice_date"])) : "-" ?>
+                </td>
                 <td><?= number_format($invoice["invoice_amount"], 2, ",", " ") ?></td>
                 <td><?= $invoice["id"]  ?> <?= $invoice["type"] ?></td>
                 <td><a target="_blank" href="<?= base_url("clients?r=" . $invoice["invoice_to"]["id"]) ?>"><?= $invoice["invoice_to"]["id"]  ?> <?= $invoice["invoice_to"]["name"]  ?><i class="ti ti-link"></i></a></td>
@@ -131,7 +133,9 @@ Rapports des factures
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
   const table2 = new DataTable('.table', {
-    order: [1, 'desc'],
+    // Colonne 2, la date de facturation. La 1 est l'état: le tableau se
+    // classait par « terminé / en cours », pas par date.
+    order: [2, 'desc'],
     layout: {
       topStart: {
         buttons: [{
