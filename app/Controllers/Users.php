@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Controllers\TransitFolders as ControllersTransitFolders;
+use App\Libraries\ListOptions;
 use App\Models\Clients;
 use App\Models\TransitFolders;
 use App\Models\Tenants;
@@ -152,11 +153,20 @@ class Users extends BaseController
         ]);
     }
 
+    /** Colonnes sur lesquelles la liste des comptes accepte d'être triée. */
+    private const TRIS_UTILISATEURS = [
+        "nom" => "name",
+        "email" => "email",
+        "profil" => "profile",
+        "creation" => "created_at",
+    ];
+
     public function list()
     {
         $modele = new ModelsUsers();
-        $search = $this->request->getGet("r");
-        if ($search) {
+        $options = new ListOptions($this->request, self::TRIS_UTILISATEURS, "nom", "ASC");
+
+        if ($options->search !== "") {
             // Les deux critères doivent être groupés. Sans les parenthèses,
             // SQL lit « name LIKE x OR (email LIKE x AND tenant_id = n) »,
             // puisque AND lie plus fort que OR: la première condition
@@ -164,12 +174,20 @@ class Users extends BaseController
             // ramenait les comptes des autres agences.
             $modele
                 ->groupStart()
-                ->like("name", $search)
-                ->orLike("email", $search)
+                ->like("name", $options->search)
+                ->orLike("email", $options->search)
                 ->groupEnd();
         }
+
+        $users = $modele
+            ->orderBy($options->column(), $options->dir)
+            ->orderBy("id", "ASC")
+            ->paginate($options->perPage);
+
         return view("users/index.php", [
-            "users" => $modele->orderBy("name", "asc")->find()
+            "users" => $users,
+            "pager" => $modele->pager,
+            "options" => $options,
         ]);
     }
 

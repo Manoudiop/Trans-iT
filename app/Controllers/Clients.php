@@ -3,19 +3,49 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Libraries\ListOptions;
 use App\Models\Clients as ModelsClients;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class Clients extends BaseController
 {
+    /** Colonnes sur lesquelles la liste des clients accepte d'être triée. */
+    private const TRIS = [
+        "nom" => "name",
+        "compte" => "account_number",
+        "creation" => "created_at",
+    ];
+
     public function index()
     {
         $model = new ModelsClients();
-        $req = $this->request->getGet();
+        $options = new ListOptions($this->request, self::TRIS, "nom", "ASC");
+
+        if ($options->search !== "") {
+            // La recherche se faisait par find($_GET), c'est-à-dire une
+            // égalité stricte sur l'identifiant: pratique pour les liens
+            // « clients?r=<id> » posés par les listes de dossiers, inutile
+            // pour quelqu'un qui tape un nom. Les deux cas sont désormais
+            // couverts, et le groupe est parenthésé pour que le OR ne
+            // s'affranchisse pas du cloisonnement par agence.
+            $model->groupStart()
+                ->like("id", $options->search)
+                ->orLike("name", $options->search)
+                ->orLike("account_number", $options->search)
+                ->orLike("email", $options->search)
+                ->orLike("phone", $options->search)
+                ->groupEnd();
+        }
+
+        $clients = $model
+            ->orderBy($options->column(), $options->dir)
+            ->orderBy("id", "ASC")
+            ->paginate($options->perPage);
+
         return view("clients/index", [
-            "clients" => $model
-                ->orderBy("name")
-                ->find($req ? $req : null)
+            "clients" => $clients,
+            "pager" => $model->pager,
+            "options" => $options,
         ]);
     }
 

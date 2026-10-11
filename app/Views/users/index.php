@@ -19,20 +19,39 @@ Utilisateurs
 <div class="col">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><?= isset($_GET["r"]) ? "Résultat: " : "Liste des utilisateurs: " ?><?= count($users) ?> utilisateur(s)</div>
+      <?php $url = base_url("utilisateurs"); ?>
+      <div class="card-title">
+        <?= $options->search !== "" ? "Résultat de la recherche" : "Comptes de l'agence" ?>
+      </div>
+
+      <?= view("partials/list_tools", [
+          "options" => $options,
+          "url" => $url,
+          "placeholder" => "Nom ou email",
+      ]) ?>
+
       <div class="table-responsive card-table">
-        <table id="myTable" class="table table-vcenter">
+        <table class="table table-vcenter">
           <thead>
             <tr>
               <th></th>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Profil</th>
-              <th>Date de création</th>
+              <th><?= entete_triable("Nom", "nom", $options, $url) ?></th>
+              <th><?= entete_triable("Email", "email", $options, $url) ?></th>
+              <th><?= entete_triable("Profil", "profil", $options, $url) ?></th>
+              <th><?= entete_triable("Date de création", "creation", $options, $url) ?></th>
               <th>Dernière modification</th>
             </tr>
           </thead>
           <tbody>
+            <?php if ($users === []) : ?>
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  <?= $options->search !== ""
+                      ? "Aucun compte ne correspond à « " . esc($options->search) . " »."
+                      : "Aucun compte." ?>
+                </td>
+              </tr>
+            <?php endif ?>
             <?php foreach ($users as $user) : ?>
               <tr>
                 <td>
@@ -50,13 +69,15 @@ Utilisateurs
                 <td><?= $user["name"] ?></td>
                 <td><?= $user["email"] ?></td>
                 <td><?= $user["profile"] ?></td>
-                <td data-order="<?= strtotime($user["created_at"]) ?>"><?= $user["created_at"] ? date("d/m/Y H:i:s", strtotime($user["created_at"])) : "-" ?></td>
-                <td data-order="<?= strtotime($user["updated_at"]) ?>"><?= $user["updated_at"] ? date("d/m/Y H:i:s", strtotime($user["updated_at"])) : "-" ?></td>
+                <td><?= $user["created_at"] ? date("d/m/Y H:i", strtotime($user["created_at"])) : "-" ?></td>
+                <td><?= $user["updated_at"] ? date("d/m/Y H:i", strtotime($user["updated_at"])) : "-" ?></td>
               </tr>
             <?php endforeach ?>
           </tbody>
         </table>
       </div>
+
+      <?= view("partials/pager", ["pager" => $pager]) ?>
     </div>
   </div>
 </div>
@@ -149,9 +170,6 @@ Utilisateurs
 
 <?= $this->endSection(); ?>
 <?= $this->section('js'); ?>
-<script>
-  let table = new DataTable('#myTable');
-</script>
 <script>
   document.getElementById("togglePassword").addEventListener("click", () => {
     const password = document.getElementById("password")

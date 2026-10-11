@@ -19,23 +19,42 @@ Clients
 <div class="col">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><?= isset($_GET["r"]) ? "Résultat: " : "Liste des clients: " ?><?= count($clients) ?> utilisateur(s)</div>
+      <?php $url = base_url("clients"); ?>
+      <div class="card-title">
+        <?= $options->search !== "" ? "Résultat de la recherche" : "Fichier clients" ?>
+      </div>
+
+      <?= view("partials/list_tools", [
+          "options" => $options,
+          "url" => $url,
+          "placeholder" => "Nom, compte, email, téléphone",
+      ]) ?>
+
       <div class="table-responsive card-table">
-        <table id="myTable" class="table table-vcenter">
+        <table class="table table-vcenter">
           <thead>
             <tr>
               <th></th>
-              <th>Nom</th>
-              <th>Numéro de compte</th>
+              <th><?= entete_triable("Nom", "nom", $options, $url) ?></th>
+              <th><?= entete_triable("Numéro de compte", "compte", $options, $url) ?></th>
               <th>Email</th>
               <th>Téléphone</th>
               <th>NINEA</th>
               <th>PPM</th>
-              <th>Date de création</th>
+              <th><?= entete_triable("Date de création", "creation", $options, $url) ?></th>
               <th>Dernière modification</th>
             </tr>
           </thead>
           <tbody>
+            <?php if ($clients === []) : ?>
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                  <?= $options->search !== ""
+                      ? "Aucun client ne correspond à « " . esc($options->search) . " »."
+                      : "Aucun client." ?>
+                </td>
+              </tr>
+            <?php endif ?>
             <?php foreach ($clients as $client) : ?>
               <tr>
                 <td>
@@ -55,13 +74,15 @@ Clients
                 <td><?= $client["phone"] ?></td>
                 <td><?= esc($client["ninea"] ?? "") ?: "-" ?></td>
                 <td><?= esc($client["ppm"] ?? "") ?: "-" ?></td>
-                <td data-order="<?= strtotime($client["created_at"]) ?>"><?= $client["created_at"] ? date("d/m/Y H:i:s", strtotime($client["created_at"])) : "-" ?></td>
-                <td data-order="<?= strtotime($client["updated_at"]) ?>"><?= $client["updated_at"] ? date("d/m/Y H:i:s", strtotime($client["updated_at"])) : "-" ?></td>
+                <td><?= $client["created_at"] ? date("d/m/Y H:i", strtotime($client["created_at"])) : "-" ?></td>
+                <td><?= $client["updated_at"] ? date("d/m/Y H:i", strtotime($client["updated_at"])) : "-" ?></td>
               </tr>
             <?php endforeach ?>
           </tbody>
         </table>
       </div>
+
+      <?= view("partials/pager", ["pager" => $pager]) ?>
     </div>
   </div>
 </div>
@@ -106,9 +127,6 @@ Clients
 
 <?= $this->endSection(); ?>
 <?= $this->section('js'); ?>
-<script>
-  let table = new DataTable('#myTable');
-</script>
 <script>
   const setDeleteId = (id) => {
     document.getElementById("deleteId").value = id;
