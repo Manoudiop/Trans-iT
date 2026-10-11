@@ -186,6 +186,14 @@ class Invoices extends BaseController
             throw new PageNotFoundException("Dossier Nº" . $id . " introuvable.");
         }
 
+        // Le découpage en sections vient de la configuration, et les montants
+        // restent accessibles par nom de poste: la vue n'a plus à énumérer
+        // les vingt-et-un débours un par un, ni à réécrire leur somme.
+        // Copié avant d'ajouter quoi que ce soit: montants ne porte que le
+        // dossier.
+        $invoice["montants"] = $invoice;
+        $invoice["invoicing"] = config(\Config\Invoicing::class);
+
         // L'en-tête portait un nom d'entreprise et un texte de remplissage
         // écrits en dur. Chaque agence doit voir le sien.
         $invoice["agence"] = (new Tenants())->find(tenant_id());

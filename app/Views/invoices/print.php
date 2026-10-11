@@ -5,6 +5,55 @@ Facture Dossier Nº <?= $id ?>
 <?= $this->section('content'); ?>
 
 <style>
+  .facture {
+    max-width: 920px;
+  }
+
+  .facture .cadre {
+    border: 1px solid #333;
+  }
+
+  .facture .cadre th,
+  .facture .cadre td {
+    border: 1px solid #333;
+    padding: .3rem .5rem;
+    vertical-align: top;
+  }
+
+  .facture .etiquette {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: #555;
+  }
+
+  .facture .repertoire th,
+  .facture .repertoire td {
+    padding: .25rem .5rem;
+    border: 0;
+    border-bottom: 1px solid #e3e3e3;
+  }
+
+  .facture .repertoire .section th {
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    background: #f2f2f2;
+    text-transform: uppercase;
+    font-size: .8rem;
+    letter-spacing: .03em;
+  }
+
+  .facture .repertoire .sous-total th {
+    border-bottom: 1px solid #333;
+  }
+
+  /* Les montants s'alignent sur le chiffre, pas sur la largeur du glyphe. */
+  .facture .montant {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
   @media print {
     .btn {
       display: none;
@@ -13,327 +62,235 @@ Facture Dossier Nº <?= $id ?>
     body {
       font-size: 10px;
     }
+
+    .facture {
+      max-width: none;
+    }
+
+    /* Une ligne de poste coupée en deux par un saut de page est illisible. */
+    .facture tr {
+      page-break-inside: avoid;
+    }
+
+    .facture .total {
+      page-break-inside: avoid;
+    }
   }
 </style>
 
-
-<div class="container bg-white">
+<div class="container facture bg-white">
 
   <button type="button" onclick="window.print()" class="btn btn-primary mt-2">
     Imprimer
   </button>
 
+  <?php
+  // strtotime(null) vaut 0, donc une date vide s'imprimait « 01/01/1970 »
+  // sur la facture remise au client.
+  $leDate = static fn ($valeur): string => empty($valeur) ? "" : date("d/m/Y", strtotime($valeur));
+  $fcfa = static fn ($montant): string => number_format((float) $montant, 2, ",", " ") . " FCFA";
 
-  <div class="d-flex justify-content-between align-items-center py-3">
+  // Une référence suivie de sa date, sans « du » orphelin quand la date manque.
+  $refEtDate = static function ($reference, $date) use ($leDate): string {
+      $reference = trim((string) $reference);
+      $date = $leDate($date);
+
+      if ($reference === "" and $date === "") {
+          return "-";
+      }
+
+      return esc($reference) . ($date === "" ? "" : " <span class=\"text-muted\">du</span> " . $date);
+  };
+
+  /**
+   * Libellés des postes. Le classement, lui, vient de Config\Invoicing:
+   * la facture et les états de gestion lisent ainsi le même découpage.
+   */
+  $libelles = [
+      "duties_taxes" => "Droits et Taxes (déclaration jointe)",
+      "agios" => "Agios 1/1000",
+      "freight" => "Frêt",
+      "bl_stamp" => "Timbre de connaissement",
+      "shipping_taxe" => "Taxes de port",
+      "boarding_disembarkation" => "Embarquement / Débarquement",
+      "storing_guarding" => "Magasinage / Gardiennage",
+      "container_transportation" => "Transport / Conteneur",
+      "handling" => "Relevage sur parc / Engin de levage",
+      "insurance" => "Assurance",
+      "transportation" => "Transport",
+      "expert_report" => "Rapport d'expertise",
+      "customs_excort" => "Escorte Douane",
+      "demurrage" => "Surestaries",
+      "customs_clearance" => "Vacation Douane",
+      "postal_package_withdrawal_fees" => "Frais de retraits de colis postaux",
+      "customs_ts_visit" => "T.S. Douane + Visite",
+      "full_land_rental" => "Location terre plein (PAD)",
+      "visit_admissibility" => "Visite / Recevabilité",
+      "indirect_fees" => "Taxes indirectes",
+      "orbus_fees" => "DPI / Orbus",
+      "trucking" => "Camionnage",
+      "grouping" => "Mise en groupage",
+      "commission_on_disbursements" => "Commission sur débours",
+      "folder_opening_fees" => "Ouverture de dossier",
+      "transit_commission" => "Commission transit",
+      "customs_honorary_fees" => "Honoraires d'agréé en Douane",
+      "had" => "H.A.D Ad Valorem",
+      "internal_handling" => "Manutention",
+      "loading_unloading" => "Empotage / Dépotage",
+      "printer" => "Imprimés",
+      "procedures_formalities" => "Démarches et formalités",
+      "tps" => "T.P.S.",
+  ];
+
+  $sections = [
+      "DÉBOURS" => $invoicing->debours,
+      "INTERVENTIONS NON TAXABLES" => $invoicing->interventions,
+      "INTERVENTIONS TAXABLES" => $invoicing->remuneration,
+  ];
+  ?>
+
+  <div class="d-flex justify-content-between align-items-start pt-3 pb-2">
     <div>
       <?php // Le logo appartient à l'agence et se dépose dans ses paramètres.
       // Sans logo, aucune balise: une image cassée sur une facture remise au
       // client est pire que pas de logo du tout. ?>
       <?php if (agency_logo_url()) : ?>
-        <img src="<?= agency_logo_url() ?>" style="max-height: 100px; max-width: 200px;" alt="<?= esc($agence["name"] ?? "") ?>">
+        <img src="<?= agency_logo_url() ?>" style="max-height: 80px; max-width: 200px;" alt="<?= esc($agence["name"] ?? "") ?>">
       <?php endif ?>
     </div>
-    <div class=" flex-grow-1 text-center" style="max-width: 400px;">
-      <div class="h1 mb-0"><?= esc($agence["name"] ?? "") ?></div>
-      <?php // Adresse, téléphone et NINEA se saisissent dans les paramètres
-      // de l'agence: une ligne vide ne s'imprime pas. ?>
-      <?php if (!empty($agence["address"])) : ?>
-        <div class="text-muted"><?= esc($agence["address"]) ?></div>
-      <?php endif ?>
-      <?php if (!empty($agence["phone"])) : ?>
-        <div class="text-muted">Tél. <?= esc($agence["phone"]) ?></div>
-      <?php endif ?>
-      <?php if (!empty($agence["ninea"])) : ?>
-        <div class="text-muted">NINEA <?= esc($agence["ninea"]) ?></div>
-      <?php endif ?>
-      <?php if (!empty($agence["agreement_number"])) : ?>
-        <div class="text-muted">Agrément <?= esc($agence["agreement_number"]) ?></div>
-      <?php endif ?>
-      <div class="h1 mb-0 mt-2"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></div>
+    <div class="text-end">
+      <?php // Adresse, téléphone, NINEA et agrément se saisissent dans les
+      // paramètres de l'agence: une ligne vide ne s'imprime pas. ?>
+      <div class="h2 mb-1"><?= esc($agence["name"] ?? "") ?></div>
+      <?php foreach ([
+          "" => $agence["address"] ?? "",
+          "Tél. " => $agence["phone"] ?? "",
+          "NINEA " => $agence["ninea"] ?? "",
+          "Agrément " => $agence["agreement_number"] ?? "",
+      ] as $prefixe => $valeur) : ?>
+        <?php if (!empty($valeur)) : ?>
+          <div class="text-muted small"><?= esc($prefixe . $valeur) ?></div>
+        <?php endif ?>
+      <?php endforeach ?>
     </div>
   </div>
 
-  <div class="row">
-    <div class="col-12 text-center">
-      <h1>Facture Nº <span class="text-primary"><?= $reference ?></span> </h1>
-    </div>
-    <div class="col-12">
-      <div class="row">
-        <div class="col">
-          <?php
-          // strtotime(null) vaut 0, donc une date vide s'imprimait
-          // « 01/01/1970 » sur la facture remise au client.
-          $leDate = static fn ($valeur): string => empty($valeur) ? "-" : date("d/m/Y", strtotime($valeur));
-          ?>
-          <div class="mb-2"><small>CNT/LTA</small> <br> <strong><?= $bl ?></strong> du <strong><?= $leDate($bl_of) ?></strong></div>
-          <div class="mb-2"><small>Vol/Navire</small> <br> <strong><?= $boat ?></strong> du <strong><?= $leDate($boat_of) ?></strong></div>
-        </div>
-        <div class="col">
-          <div class="mb-2"><small>Nombre de colis</small> <br> <strong><?= $items_count ?></strong></div>
-          <div class="mb-2"><small>Poids total en Kg</small> <br> <strong><?= $total_weight ?></strong></div>
-        </div>
-        <div class="col">
-          <div class="mb-2">
-            <small>Clients</small> <br>
-            <strong><?= esc($invoice_to["id"]) ?> <?= esc($invoice_to["name"]) ?></strong>
-            <?php // Identifiants fiscaux du client: propres aux entreprises,
-            // absents chez un particulier, donc affichés seulement s'ils sont là. ?>
-            <?php if (!empty($invoice_to["ninea"])) : ?>
-              <br><small>NINEA <?= esc($invoice_to["ninea"]) ?></small>
-            <?php endif ?>
-            <?php if (!empty($invoice_to["ppm"])) : ?>
-              <br><small>PPM <?= esc($invoice_to["ppm"]) ?></small>
-            <?php endif ?>
-          </div>
-          <?php // Le poids total figurait deux fois, ici et dans la colonne des colis.
-          // La déclaration, elle, est remontée du bas de l'en-tête: c'est la
-          // référence que le client cite, elle se lit avec son nom. ?>
-          <div class="mb-2"><small>Déclaration</small> <br> <strong><?= esc($declaration ?: "-") ?></strong></div>
-        </div>
-        <div class="col-12">
-          <div class="mb-2"><small>Désignation</small> <br> <strong><?= esc($designation) ?></strong></div>
-        </div>
-      </div>
-    </div>
-    <hr class="mt-2" style="border: solid 2px black;opacity:1">
-    <div class="col-12">
-      <h3 class="text-center">RÉPERTOIRE</h3>
-      <table id="merchTable" class="table table-vcenter table-sm text-sm">
-        <tbody>
-          <tr>
-            <th colspan="2">DÉBOURS</th>
-          </tr>
-          <?php if ($duties_taxes > 0) : ?>
+  <table class="cadre w-100 mb-3">
+    <tr>
+      <th class="text-center" style="background: #f2f2f2;" colspan="2">
+        <span class="h3">FACTURE Nº <?= esc($reference) ?></span>
+        <span class="ms-2"><?= $type == "EXP" ? "EXPORT" : "IMPORT" ?></span>
+        <?php if (!empty($invoice_date)) : ?>
+          <span class="ms-2 text-muted">du <?= $leDate($invoice_date) ?></span>
+        <?php endif ?>
+      </th>
+    </tr>
+    <tr>
+      <td style="width: 45%;">
+        <div class="etiquette">Doit</div>
+        <div class="fw-bold"><?= esc($invoice_to["name"]) ?></div>
+        <div class="small text-muted">Compte <?= esc($invoice_to["id"]) ?></div>
+        <?php // Identifiants fiscaux du client: propres aux entreprises,
+        // absents chez un particulier, donc affichés seulement s'ils sont là. ?>
+        <?php if (!empty($invoice_to["ninea"])) : ?>
+          <div class="small">NINEA <?= esc($invoice_to["ninea"]) ?></div>
+        <?php endif ?>
+        <?php if (!empty($invoice_to["ppm"])) : ?>
+          <div class="small">PPM <?= esc($invoice_to["ppm"]) ?></div>
+        <?php endif ?>
+      </td>
+      <td>
+        <table class="w-100">
+          <?php foreach ([
+              "CNT / LTA" => $refEtDate($bl, $bl_of),
+              "Vol / Navire" => $refEtDate($boat, $boat_of),
+              "Déclaration" => esc($declaration ?: "-"),
+              "Colis" => esc($items_count) . " colis — " . number_format((float) $total_weight, 0, ",", " ") . " kg",
+          ] as $etiquette => $valeur) : ?>
             <tr>
-              <td width="100%">Droits et Taxes (déclaration jointe)</td>
-              <td class=" text-nowrap"><?= number_format($duties_taxes, 2, ",", " ") ?> FCFA</td>
+              <td class="etiquette pe-2" style="border: 0; padding: .1rem 0; width: 7.5rem;"><?= $etiquette ?></td>
+              <td style="border: 0; padding: .1rem 0;"><?= $valeur ?></td>
             </tr>
-          <?php endif ?>
-          <?php if ($agios) : ?>
-            <tr>
-              <td width="100%">Agios 1/1000</td>
-              <td class=" text-nowrap"><?= number_format($agios, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($freight) : ?>
-            <tr>
-              <td width="100%">Frêt</td>
-              <td class=" text-nowrap"><?= number_format($freight, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($bl_stamp) : ?>
-            <tr>
-              <td width="100%">Timbre de connaissement</td>
-              <td class=" text-nowrap"><?= number_format($bl_stamp, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($shipping_taxe) : ?>
-            <tr>
-              <td width="100%">Taxes de port</td>
-              <td class=" text-nowrap"><?= number_format($shipping_taxe, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($boarding_disembarkation) : ?>
-            <tr>
-              <td width="100%">Embarquement / Débarquement</td>
-              <td class=" text-nowrap"><?= number_format($boarding_disembarkation, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($storing_guarding) : ?>
-            <tr>
-              <td width="100%">Magasinage / Gardiennage</td>
-              <td class=" text-nowrap"><?= number_format($storing_guarding, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($container_transportation) : ?>
-            <tr>
-              <td width="100%">Transport / Conteneur</td>
-              <td class=" text-nowrap"><?= number_format($container_transportation, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($handling) : ?>
-            <tr>
-              <td width="100%">Relevage sur parc / Engin de levage</td>
-              <td class=" text-nowrap"><?= number_format($handling, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($insurance) : ?>
-            <tr>
-              <td width="100%">Assurance</td>
-              <td class=" text-nowrap"><?= number_format($insurance, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($transportation) : ?>
-            <tr>
-              <td width="100%">Transport</td>
-              <td class=" text-nowrap"><?= number_format($transportation, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($expert_report) : ?>
-            <tr>
-              <td width="100%">Rapport d'expertise</td>
-              <td class=" text-nowrap"><?= number_format($expert_report, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($customs_excort) : ?>
-            <tr>
-              <td width="100%">Escorte Douane</td>
-              <td class=" text-nowrap"><?= number_format($customs_excort, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($demurrage) : ?>
-            <tr>
-              <td width="100%">Surrestaries</td>
-              <td class=" text-nowrap"><?= number_format($demurrage, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($customs_clearance) : ?>
-            <tr>
-              <td width="100%">Vacation Douane</td>
-              <td class=" text-nowrap"><?= number_format($customs_clearance, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($postal_package_withdrawal_fees) : ?>
-            <tr>
-              <td width="100%">Frais de retraits de colis postaux</td>
-              <td class=" text-nowrap"><?= number_format($postal_package_withdrawal_fees, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($customs_ts_visit) : ?>
-            <tr>
-              <td width="100%">T.S. Douane + Visite</td>
-              <td class=" text-nowrap"><?= number_format($customs_ts_visit, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($full_land_rental) : ?>
-            <tr>
-              <td width="100%">Location terre plein (PAD)</td>
-              <td class=" text-nowrap"><?= number_format($full_land_rental, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($visit_admissibility) : ?>
-            <tr>
-              <td width="100%">Visite / Recevabilité</td>
-              <td class=" text-nowrap"><?= number_format($visit_admissibility, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($indirect_fees) : ?>
-            <tr>
-              <td width="100%">Taxes indirectes</td>
-              <td class=" text-nowrap"><?= number_format($indirect_fees, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($orbus_fees) : ?>
-            <tr>
-              <td width="100%">DPI / Orbus</td>
-              <td class=" text-nowrap"><?= number_format($orbus_fees, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <tr>
-            <th class="text-end">Sous total:</th>
-            <th class="text-nowrap"><?= number_format($duties_taxes + $agios + $freight + $bl_stamp + $shipping_taxe + $boarding_disembarkation + $storing_guarding + $container_transportation + $handling + $insurance + $transportation + $expert_report + $customs_excort + $demurrage + $customs_clearance + $postal_package_withdrawal_fees + $customs_ts_visit + $full_land_rental + $visit_admissibility + $indirect_fees + $orbus_fees, 2, ",", " ") ?> FCFA</th>
-          </tr>
+          <?php endforeach ?>
+        </table>
+      </td>
+    </tr>
+    <?php // Ligne entière masquée quand la désignation est vide: elle laissait
+    // une bande blanche au milieu de l'en-tête. ?>
+    <?php if (!empty($designation)) : ?>
+      <tr>
+        <td colspan="2">
+          <div class="etiquette">Désignation</div>
+          <?= esc($designation) ?>
+        </td>
+      </tr>
+    <?php endif ?>
+  </table>
 
-          <tr>
-            <th colspan="2">INTERVENTIONS NON TAXABLES</th>
-          </tr>
-          <?php if ($trucking) : ?>
-            <tr>
-              <td width="100%">Camionnage</td>
-              <td class=" text-nowrap"><?= number_format($trucking, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($grouping) : ?>
-            <tr>
-              <td width="100%">Mise en groupage</td>
-              <td class=" text-nowrap"><?= number_format($grouping, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <tr>
-            <th class="text-end">Sous total:</th>
-            <th class="text-nowrap"><?= number_format($trucking + $grouping, 2, ",", " ") ?> FCFA</th>
-          </tr>
+  <table class="repertoire w-100 mb-3">
+    <?php $total = 0; ?>
+    <?php foreach ($sections as $titre => $postes) : ?>
+      <?php
+      // Section entièrement vide: inutile d'imprimer un intitulé suivi d'un
+      // sous-total à zéro.
+      $lignes = array_filter(
+          $postes,
+          static fn (string $poste): bool => (float) ($montants[$poste] ?? 0) !== 0.0
+      );
+      ?>
+      <?php if ($lignes === []) : ?>
+        <?php continue ?>
+      <?php endif ?>
+      <tr class="section">
+        <th><?= esc($titre) ?></th>
+        <th class="montant"></th>
+      </tr>
+      <?php $sousTotal = 0; ?>
+      <?php foreach ($lignes as $poste) : ?>
+        <?php $sousTotal += (float) $montants[$poste]; ?>
+        <tr>
+          <td><?= esc($libelles[$poste] ?? $poste) ?></td>
+          <td class="montant"><?= $fcfa($montants[$poste]) ?></td>
+        </tr>
+      <?php endforeach ?>
+      <?php $total += $sousTotal; ?>
+      <tr class="sous-total">
+        <th class="text-end">Sous-total <?= esc($titre) ?></th>
+        <th class="montant"><?= $fcfa($sousTotal) ?></th>
+      </tr>
+    <?php endforeach ?>
+  </table>
 
-          <tr>
-            <th colspan="2">INTERVENTIONS TAXABLES</th>
-          </tr>
-          <?php if ($commission_on_disbursements) : ?>
-            <tr>
-              <td width="100%">Commission sur débours</td>
-              <td class=" text-nowrap"><?= number_format($commission_on_disbursements, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($folder_opening_fees) : ?>
-            <tr>
-              <td width="100%">Ouverture de dossier</td>
-              <td class=" text-nowrap"><?= number_format($folder_opening_fees, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($transit_commission) : ?>
-            <tr>
-              <td width="100%">Commission transit</td>
-              <td class=" text-nowrap"><?= number_format($transit_commission, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($customs_honorary_fees) : ?>
-            <tr>
-              <td width="100%">Horaires d'agréé en Douane </td>
-              <td class=" text-nowrap"><?= number_format($customs_honorary_fees, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($had) : ?>
-            <tr>
-              <td width="100%">H.A.D Ad Valorem</td>
-              <td class=" text-nowrap"><?= number_format($had, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($internal_handling) : ?>
-            <tr>
-              <td width="100%">Manutension</td>
-              <td class=" text-nowrap"><?= number_format($internal_handling, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($loading_unloading) : ?>
-            <tr>
-              <td width="100%">Empotage / Dépotage</td>
-              <td class=" text-nowrap"><?= number_format($loading_unloading, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($printer) : ?>
-            <tr>
-              <td width="100%">Imprimés</td>
-              <td class=" text-nowrap"><?= number_format($printer, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($procedures_formalities) : ?>
-            <tr>
-              <td width="100%">Démarches et formalités</td>
-              <td class=" text-nowrap"><?= number_format($procedures_formalities, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <?php if ($tps) : ?>
-            <tr>
-              <td width="100%">T.P.S.</td>
-              <td class=" text-nowrap"><?= number_format($tps, 2, ",", " ") ?> FCFA</td>
-            </tr>
-          <?php endif ?>
-          <tr>
-            <th class="text-end">Sous total:</th>
-            <th class="text-nowrap"><?= number_format($commission_on_disbursements + $folder_opening_fees + $transit_commission + $customs_honorary_fees + $had + $internal_handling + $loading_unloading + $printer + $procedures_formalities + $tps, 2, ",", " ") ?> FCFA</th>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <hr class="mt-2" style="border: solid 2px black;opacity:1">
-    <div class="text-end mb-5">
-      <div>Arrête la facture au montant de:</div>
-      <div class="display-5"><?= number_format($invoice_amount, 2, ",", " ") ?> FCFA</div>
-    </div>
-
+  <div class="d-flex justify-content-end mb-5 total">
+    <table class="cadre" style="min-width: 22rem;">
+      <tr>
+        <td class="etiquette">Arrêtée la présente facture à la somme de</td>
+      </tr>
+      <tr>
+        <td class="montant h2 mb-0"><?= $fcfa($invoice_amount) ?></td>
+      </tr>
+    </table>
   </div>
+
+  <?php
+  // invoice_amount est une colonne générée: la base somme elle-même les
+  // trente-trois postes. Les lignes ci-dessus, elles, sont celles que
+  // Config\Invoicing classe dans les trois sections. Un poste oublié dans
+  // cette configuration disparaîtrait donc du détail tout en restant dans
+  // le total: le client paierait une somme que sa facture ne justifie pas.
+  // L'écart le révèle. Vérifié en retirant « tps » de la configuration.
+  $ecart = round((float) $invoice_amount - $total, 2);
+  ?>
+  <?php if (abs($ecart) >= 0.01) : ?>
+    <div class="alert alert-warning d-print-none">
+      <strong>Ne remettez pas cette facture en l'état.</strong>
+      Le détail ci-dessus totalise <?= $fcfa($total) ?>, soit
+      <?= $fcfa(abs($ecart)) ?> de moins que le montant facturé: un poste
+      chiffré n'apparaît sur aucune des trois sections. Il manque à son
+      classement dans <code>Config\Invoicing</code>.
+    </div>
+  <?php endif ?>
 
 </div>
-
-
 
 <?= $this->endSection(); ?>
