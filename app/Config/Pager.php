@@ -21,6 +21,9 @@ class Pager extends BaseConfig
      * @var array<string, string>
      */
     public array $templates = [
+        // Gabarit maison: celui de CodeIgniter n'ajoute aucune classe du kit
+        // d'interface, sa pagination s'affiche donc sans style.
+        'transit'        => 'partials/pager_links',
         'default_full'   => 'CodeIgniter\Pager\Views\default_full',
         'default_simple' => 'CodeIgniter\Pager\Views\default_simple',
         'default_head'   => 'CodeIgniter\Pager\Views\default_head',

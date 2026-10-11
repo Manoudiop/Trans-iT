@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Libraries\ListOptions;
 use App\Models\Clients;
 use App\Models\TransitFiles;
 use App\Models\TransitFolderItems;
@@ -12,27 +13,40 @@ use Config\Workflow;
 
 class TransitFolders extends BaseController
 {
+    /** Colonnes sur lesquelles la liste des dossiers accepte d'être triée. */
+    private const TRIS = [
+        "date" => "open_date",
+        "numero" => "id",
+        "etat" => "closed",
+        "facture" => "invoiced",
+    ];
+
     public function index()
     {
         $model = new ModelsTransitFolders();
+        $options = new ListOptions($this->request, self::TRIS, "date");
 
-        $r = $this->request->getGet('r');
-        if ($r) {
-            $model
-                ->like("id", $r);
+        if ($options->search !== "") {
+            // Groupé, sinon le OR s'affranchirait du cloisonnement par agence.
+            $model->groupStart()
+                ->like("id", $options->search)
+                ->orLike("bl", $options->search)
+                ->groupEnd();
         }
 
-        // Du plus récent au plus ancien: c'est le dossier d'hier qu'on
-        // vient chercher, pas celui de l'an dernier. L'identifiant
+        // Du plus récent au plus ancien par défaut: c'est le dossier d'hier
+        // qu'on vient chercher, pas celui de l'an dernier. L'identifiant
         // départage les ouvertures du même jour, qu'une date seule laisse
         // dans un ordre arbitraire.
         $folders = $model
-            ->orderBy("open_date", "DESC")
+            ->orderBy($options->column(), $options->dir)
             ->orderBy("id", "DESC")
-            ->find();
+            ->paginate($options->perPage);
 
         return view("transit_folders/index", [
-            "folders" => $folders
+            "folders" => $folders,
+            "pager" => $model->pager,
+            "options" => $options,
         ]);
     }
 

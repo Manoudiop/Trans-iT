@@ -19,21 +19,43 @@ Dossiers
 <div class="col">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><?= isset($_GET["r"]) ? "Résultat: " : "Liste des dossiers: " ?><?= count($folders) ?> dossier(s)</div>
+      <?php $url = base_url("dossiers"); ?>
+      <div class="card-title">
+        <?= $options->search !== "" ? "Résultat de la recherche" : "Liste des dossiers" ?>
+      </div>
+
+      <?php // view() et non $this->include(): le second paramètre de include()
+      // est une liste d'options de rendu, pas des données, et le partiel ne
+      // recevrait rien. ?>
+      <?= view("partials/list_tools", [
+          "options" => $options,
+          "url" => $url,
+          "placeholder" => "Numéro de dossier ou connaissement",
+      ]) ?>
+
       <div class="table-responsive card-table">
-        <table id="myTable" class="table table-vcenter">
+        <table class="table table-vcenter">
           <thead>
             <tr>
               <th></th>
-              <th>Date d'ouverture</th>
-              <th>Etats</th>
-              <th>Faturé?</th>
-              <th>Nº</th>
+              <th><?= entete_triable("Date d'ouverture", "date", $options, $url) ?></th>
+              <th><?= entete_triable("État", "etat", $options, $url) ?></th>
+              <th><?= entete_triable("Facturé ?", "facture", $options, $url) ?></th>
+              <th><?= entete_triable("Nº", "numero", $options, $url) ?></th>
               <th>Clients</th>
               <th>Fichiers joints</th>
             </tr>
           </thead>
           <tbody>
+            <?php if ($folders === []) : ?>
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  <?= $options->search !== ""
+                      ? "Aucun dossier ne correspond à « " . esc($options->search) . " »."
+                      : "Aucun dossier." ?>
+                </td>
+              </tr>
+            <?php endif ?>
             <?php foreach ($folders as $folder) : ?>
               <tr>
                 <td>
@@ -51,13 +73,7 @@ Dossiers
                     </div>
                   </div>
                 </td>
-                <?php // data-order: sans clé de tri, DataTables compare
-                // « 28/10/2026 » et « 27/10/2026 » comme du texte, donc le
-                // jour avant le mois. Un dossier du 27 octobre se retrouvait
-                // derrière un dossier du 28 février. ?>
-                <td data-order="<?= $folder["open_date"] ? strtotime($folder["open_date"]) : 0 ?>">
-                  <?= $folder["open_date"] ? date("d/m/Y", strtotime($folder["open_date"])) : "-" ?>
-                </td>
+                <td><?= $folder["open_date"] ? date("d/m/Y", strtotime($folder["open_date"])) : "-" ?></td>
                 <td><?= $folder["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
                 <td><?= $folder["invoiced"] ? "<span class='badge bg-success'>OUI</span>" : "<span class='badge bg-danger'>NON</span>" ?></td>
                 <td><?= $folder["id"]  ?> <?= $folder["type"] ?></td>
@@ -68,6 +84,8 @@ Dossiers
           </tbody>
         </table>
       </div>
+
+      <?= view("partials/pager", ["pager" => $pager]) ?>
     </div>
   </div>
 </div>
@@ -75,12 +93,5 @@ Dossiers
 
 <?= $this->endSection(); ?>
 <?= $this->section('js'); ?>
-<script>
-  let table = new DataTable('#myTable', {
-    order: [
-      [1, 'desc']
-    ]
-  });
-</script>
 
 <?= $this->endSection(); ?>

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Libraries\ListOptions;
 use App\Models\Clients;
 use App\Models\Tenants;
 use App\Models\TransitFolders;
@@ -11,27 +12,48 @@ use CodeIgniter\I18n\Time;
 
 class Invoices extends BaseController
 {
+    /** Colonnes sur lesquelles la liste des factures accepte d'être triée. */
+    private const TRIS_FACTUREES = [
+        "date" => "invoice_date",
+        "montant" => "invoice_amount",
+        "numero" => "id",
+        "etat" => "closed",
+    ];
+
+    /** Colonnes de la liste des dossiers restant à facturer. */
+    private const TRIS_NON_FACTUREES = [
+        "date" => "open_date",
+        "numero" => "id",
+        "etat" => "closed",
+    ];
+
     public function index()
     {
         $modele = new TransitFolders();
-        $r = $this->request->getGet("r");
-        if ($r) {
+        $options = new ListOptions($this->request, self::TRIS_FACTUREES, "date");
+
+        if ($options->search !== "") {
             // Groupé: sans les parenthèses, AND liant plus fort que OR, la
             // condition sur la référence s'affranchissait du cloisonnement
             // par agence et du filtre sur les dossiers facturés.
             $modele
                 ->groupStart()
-                ->like("reference", $r)
-                ->orLike("id", $r)
+                ->like("reference", $options->search)
+                ->orLike("id", $options->search)
                 ->groupEnd();
         }
+
         // Facture la plus récente en tête, comme la liste des dossiers.
+        $invoices = $modele
+            ->where("invoiced", true)
+            ->orderBy($options->column(), $options->dir)
+            ->orderBy("id", "DESC")
+            ->paginate($options->perPage);
+
         return view("invoices/index", [
-            "invoices" => $modele
-                ->where("invoiced", true)
-                ->orderBy("invoice_date", "DESC")
-                ->orderBy("id", "DESC")
-                ->find()
+            "invoices" => $invoices,
+            "pager" => $modele->pager,
+            "options" => $options,
         ]);
     }
 
@@ -72,12 +94,25 @@ class Invoices extends BaseController
     public function notInvoiced()
     {
         $modele = new TransitFolders();
+        $options = new ListOptions($this->request, self::TRIS_NON_FACTUREES, "date");
+
+        if ($options->search !== "") {
+            $modele->groupStart()
+                ->like("id", $options->search)
+                ->orLike("bl", $options->search)
+                ->groupEnd();
+        }
+
+        $invoices = $modele
+            ->where("invoiced", false)
+            ->orderBy($options->column(), $options->dir)
+            ->orderBy("id", "DESC")
+            ->paginate($options->perPage);
+
         return view("invoices/notInvoiced", [
-            "invoices" => $modele
-                ->where("invoiced", false)
-                ->orderBy("open_date", "DESC")
-                ->orderBy("id", "DESC")
-                ->find()
+            "invoices" => $invoices,
+            "pager" => $modele->pager,
+            "options" => $options,
         ]);
     }
 

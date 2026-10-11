@@ -19,20 +19,39 @@ Factures - Dossiers non facturés
 <div class="col">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><?= isset($_GET["r"]) ? "Résultat: " : "Liste des dossiers: " ?><?= count($invoices) ?> dossier(s)</div>
+      <?php $url = base_url("factures/non-factures"); ?>
+      <div class="card-title">
+        <?= $options->search !== "" ? "Résultat de la recherche" : "Dossiers restant à facturer" ?>
+      </div>
+
+      <?= view("partials/list_tools", [
+          "options" => $options,
+          "url" => $url,
+          "placeholder" => "Numéro de dossier ou connaissement",
+      ]) ?>
+
       <div class="table-responsive card-table">
-        <table id="myTable" class="table table-vcenter">
+        <table class="table table-vcenter">
           <thead>
             <tr>
               <th></th>
-              <th>Date d'ouverture</th>
-              <th>Etats</th>
-              <th>Faturé?</th>
-              <th>Nº</th>
+              <th><?= entete_triable("Date d'ouverture", "date", $options, $url) ?></th>
+              <th><?= entete_triable("État", "etat", $options, $url) ?></th>
+              <th>Facturé ?</th>
+              <th><?= entete_triable("Nº", "numero", $options, $url) ?></th>
               <th>Clients</th>
             </tr>
           </thead>
           <tbody>
+            <?php if ($invoices === []) : ?>
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  <?= $options->search !== ""
+                      ? "Aucun dossier ne correspond à « " . esc($options->search) . " »."
+                      : "Tous les dossiers sont facturés." ?>
+                </td>
+              </tr>
+            <?php endif ?>
             <?php foreach ($invoices as $invoice) : ?>
               <tr>
                 <td>
@@ -46,9 +65,7 @@ Factures - Dossiers non facturés
                     </div>
                   </div>
                 </td>
-                <td data-order="<?= $invoice["open_date"] ? strtotime($invoice["open_date"]) : 0 ?>">
-                  <?= $invoice["open_date"] ? date("d/m/Y", strtotime($invoice["open_date"])) : "-" ?>
-                </td>
+                <td><?= $invoice["open_date"] ? date("d/m/Y", strtotime($invoice["open_date"])) : "-" ?></td>
                 <td><?= $invoice["closed"] ? "<span class='badge bg-success'>TERMINÉ</span>" : "<span class='badge bg-warning'>EN COURS</span>" ?></td>
                 <td><?= $invoice["invoiced"] ? "<span class='badge bg-success'>OUI</span>" : "<span class='badge bg-danger'>NON</span>" ?></td>
                 <td><?= $invoice["id"]  ?> <?= $invoice["type"] ?></td>
@@ -58,6 +75,8 @@ Factures - Dossiers non facturés
           </tbody>
         </table>
       </div>
+
+      <?= view("partials/pager", ["pager" => $pager]) ?>
     </div>
   </div>
 </div>
@@ -65,12 +84,5 @@ Factures - Dossiers non facturés
 
 <?= $this->endSection(); ?>
 <?= $this->section('js'); ?>
-<script>
-  let table = new DataTable('#myTable', {
-    order: [
-      [1, 'desc']
-    ]
-  });
-</script>
 
 <?= $this->endSection(); ?>
