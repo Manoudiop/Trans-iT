@@ -261,7 +261,7 @@ Facture Dossier Nº <?= $id ?>
     <?php endforeach ?>
   </table>
 
-  <div class="d-flex justify-content-end mb-5 total">
+  <div class="d-flex justify-content-end mb-3 total">
     <table class="cadre" style="min-width: 22rem;">
       <tr>
         <td class="etiquette">Arrêtée la présente facture à la somme de</td>
@@ -269,7 +269,34 @@ Facture Dossier Nº <?= $id ?>
       <tr>
         <td class="montant h2 mb-0"><?= $fcfa($invoice_amount) ?></td>
       </tr>
+      <?php // Mention en toutes lettres: c'est elle qui fait foi en cas de
+      // désaccord sur le chiffre. ?>
+      <?php $enLettres = montant_en_lettres((float) $invoice_amount); ?>
+      <?php if ($enLettres !== "") : ?>
+        <tr>
+          <td class="small fst-italic"><?= esc($enLettres) ?></td>
+        </tr>
+      <?php endif ?>
     </table>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-start gap-4 mb-5 total">
+    <div style="max-width: 55%;">
+      <?php // Conditions de règlement: propres à chaque maison, saisies dans
+      // les paramètres de l'agence. Rien ne s'imprime si rien n'est saisi. ?>
+      <?php if (!empty($agence["payment_terms"])) : ?>
+        <div class="etiquette">Conditions de règlement</div>
+        <div class="small" style="white-space: pre-line;"><?= esc($agence["payment_terms"]) ?></div>
+      <?php endif ?>
+    </div>
+    <div class="text-center">
+      <div class="mb-1">
+        Fait à <?= esc($agence["city"] ?? "") ?: "……………………" ?>,
+        le <?= $leDate($invoice_date) ?: "……………………" ?>
+      </div>
+      <div class="etiquette">Signature et cachet</div>
+      <div style="border: 1px solid #333; height: 4.5rem; min-width: 14rem;"></div>
+    </div>
   </div>
 
   <?php

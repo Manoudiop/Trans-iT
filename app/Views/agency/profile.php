@@ -34,11 +34,22 @@ Paramètres de l'agence
               value="<?= set_value("phone", $agence["phone"] ?? "") ?>" placeholder="+221 33 000 00 00" />
           </div>
         </div>
-        <div class="col-md-12">
+        <div class="col-md-8">
           <div class="mb-3">
             <label for="address" class="form-label">Adresse</label>
             <input type="text" class="form-control" name="address" id="address"
               value="<?= set_value("address", $agence["address"] ?? "") ?>" placeholder="Km 4,5 Boulevard du Centenaire, Dakar" />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="city" class="form-label">Ville</label>
+            <input type="text" class="form-control" name="city" id="city"
+              value="<?= set_value("city", $agence["city"] ?? "") ?>" placeholder="Dakar" />
+            <small class="form-hint">
+              Pour la mention « Fait à … » au bas de la facture. Saisie à part:
+              elle ne se découpe pas de façon fiable depuis l'adresse.
+            </small>
           </div>
         </div>
         <div class="col-md-6">
@@ -56,6 +67,17 @@ Paramètres de l'agence
             <small class="form-hint">
               Reporté automatiquement sur les notes de détail. Un dossier dédouané
               sous l'agrément d'un confrère garde le sien, saisi sur le dossier.
+            </small>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="mb-3">
+            <label for="payment_terms" class="form-label">Conditions de règlement</label>
+            <textarea class="form-control" name="payment_terms" id="payment_terms" rows="3"
+              placeholder="Règlement à 30 jours date de facture. Virement: CBAO SN012 01001 000123456789 12. Tout retard entraîne des pénalités au taux légal."><?= set_value("payment_terms", $agence["payment_terms"] ?? "") ?></textarea>
+            <small class="form-hint">
+              Imprimées au bas de chaque facture, sous le total. Délai, mode de
+              règlement, coordonnées bancaires, pénalités: ce que vous voulez y voir.
             </small>
           </div>
         </div>
