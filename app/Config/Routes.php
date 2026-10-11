@@ -83,6 +83,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/', 'Invoices::index');
     $routes->get('non-factures', 'Invoices::notInvoiced');
     $routes->get('encours', 'Invoices::outstanding');
+    $routes->get('encaissements', 'Settlements::receipts');
     $routes->post('reglements/ajouter', 'Settlements::add');
     $routes->post('reglements/supprimer', 'Settlements::delete');
     $routes->get('reglements/(:num)', 'Settlements::index/$1');

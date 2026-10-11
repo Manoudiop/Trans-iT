@@ -245,6 +245,9 @@
                     <a class="dropdown-item" href="<?= base_url("factures/non-factures") ?>">
                       Lister les dossiers non facturés
                     </a>
+                    <a class="dropdown-item" href="<?= base_url("factures/encaissements") ?>">
+                      Encaissements
+                    </a>
                   </div>
                 </li>
               <?php endif ?>

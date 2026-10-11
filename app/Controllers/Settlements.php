@@ -2,8 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ListOptions;
 use App\Models\Payments;
 use App\Models\TransitFolders;
+use App\Models\Users;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 /**
@@ -24,6 +26,117 @@ class Settlements extends BaseController
             "methodes" => Payments::METHODES,
             "solde" => $this->balance($folder),
         ]);
+    }
+
+    /** Colonnes sur lesquelles la vue d'ensemble accepte d'être triée. */
+    private const TRIS = [
+        "date" => "paid_at",
+        "montant" => "amount",
+        "mode" => "method",
+        "dossier" => "folder_id",
+    ];
+
+    /**
+     * Vue d'ensemble des encaissements.
+     *
+     * Sans elle, « qu'est-ce qui est rentré cette semaine, et par quel
+     * mode ? » obligeait à ouvrir les factures une par une: les règlements
+     * n'existaient que rattachés à la leur.
+     */
+    public function receipts()
+    {
+        $options = new ListOptions($this->request, self::TRIS, "date", "DESC", ["du", "au", "mode"]);
+
+        // Le mois courant par défaut: c'est la période qu'on consulte en
+        // tenant une caisse, et elle évite d'afficher tout l'historique à
+        // l'ouverture.
+        $du = $this->dateOrDefault($options->extra["du"] ?? null, date("Y-m-01"));
+        $au = $this->dateOrDefault($options->extra["au"] ?? null, date("Y-m-d"));
+
+        // Le mode vient de l'URL et finit dans un WHERE: il doit être l'un
+        // de ceux que l'application propose, ou rien.
+        $mode = $options->extra["mode"] ?? null;
+        $mode = isset(Payments::METHODES[$mode]) ? $mode : null;
+
+        $model = new Payments();
+        $model->where("paid_at >=", $du)->where("paid_at <=", $au);
+
+        if ($mode !== null) {
+            $model->where("method", $mode);
+        }
+
+        if ($options->search !== "") {
+            // Parenthésé: sans cela le OR s'affranchirait du cloisonnement.
+            $model->groupStart()
+                ->like("reference", $options->search)
+                ->orLike("note", $options->search)
+                ->orLike("folder_id", $options->search)
+                ->groupEnd();
+        }
+
+        $reglements = $model
+            ->orderBy($options->column(), $options->dir)
+            ->orderBy("id", "DESC")
+            ->paginate($options->perPage);
+
+        return view("invoices/receipts", [
+            "reglements" => $reglements,
+            "pager" => $model->pager,
+            "options" => $options,
+            "du" => $du,
+            "au" => $au,
+            "mode" => $mode,
+            "methodes" => Payments::METHODES,
+            // Les totaux portent sur la période entière, pas sur la page.
+            "totaux" => (new Payments())->periodTotals($du, $au, $mode),
+            "rattachements" => $this->attach($reglements),
+        ]);
+    }
+
+    /**
+     * Noms de clients et auteurs de saisie des règlements affichés.
+     *
+     * Trois requêtes groupées pour toute la page, au lieu d'une par ligne.
+     *
+     * @param list<array<string, mixed>> $reglements
+     * @return array{clients: array<string, string>, auteurs: array<int, string>}
+     */
+    private function attach(array $reglements): array
+    {
+        $folderIds = array_values(array_unique(array_filter(array_column($reglements, "folder_id"))));
+        $auteurIds = array_values(array_unique(array_filter(array_column($reglements, "recorded_by"))));
+
+        $clientParDossier = [];
+
+        if ($folderIds !== []) {
+            // Le modèle des dossiers rattache lui-même le client: invoice_to
+            // porte la fiche entière, pas l'identifiant. Rechercher les noms
+            // ici referait un travail déjà fait, en une requête de plus.
+            foreach ((new TransitFolders())->whereIn("id", $folderIds)->findAll() as $dossier) {
+                $clientParDossier[(string) $dossier["id"]] = $dossier["invoice_to"]["name"] ?? null;
+            }
+        }
+
+        return [
+            "clients" => $clientParDossier,
+            "auteurs" => $auteurIds === [] ? [] : array_column(
+                (new Users())->whereIn("id", $auteurIds)->findAll(),
+                "name",
+                "id"
+            ),
+        ];
+    }
+
+    /** Une date invalide ou absente retombe sur la valeur par défaut. */
+    private function dateOrDefault(?string $valeur, string $defaut): string
+    {
+        if ($valeur === null or !preg_match("/^\d{4}-\d{2}-\d{2}$/", $valeur)) {
+            return $defaut;
+        }
+
+        return checkdate((int) substr($valeur, 5, 2), (int) substr($valeur, 8, 2), (int) substr($valeur, 0, 4))
+            ? $valeur
+            : $defaut;
     }
 
     public function add()

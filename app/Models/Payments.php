@@ -79,6 +79,44 @@ class Payments extends TenantModel
     }
 
     /**
+     * Ventilation des encaissements d'une période, par mode de règlement.
+     *
+     * Une somme groupée en base, et non un parcours des lignes en PHP: la
+     * page n'en affiche que vingt, alors que le total doit porter sur la
+     * période entière.
+     *
+     * @return array{total: float, nombre: int, parMode: array<string, array{montant: float, nombre: int}>}
+     */
+    public function periodTotals(string $du, string $au, ?string $mode = null): array
+    {
+        $builder = $this->select("method, SUM(amount) AS montant, COUNT(*) AS nombre")
+            ->where("paid_at >=", $du)
+            ->where("paid_at <=", $au);
+
+        if ($mode !== null) {
+            $builder->where("method", $mode);
+        }
+
+        $lignes = $builder->groupBy("method")->findAll();
+
+        $parMode = [];
+        $total = 0.0;
+        $nombre = 0;
+
+        foreach ($lignes as $ligne) {
+            $montant = (float) $ligne["montant"];
+            $parMode[(string) $ligne["method"]] = [
+                "montant" => $montant,
+                "nombre" => (int) $ligne["nombre"],
+            ];
+            $total += $montant;
+            $nombre += (int) $ligne["nombre"];
+        }
+
+        return ["total" => $total, "nombre" => $nombre, "parMode" => $parMode];
+    }
+
+    /**
      * Recalcule le total encaissé d'un dossier.
      *
      * Somme en base plutôt qu'incrément en PHP: le total reste juste même si

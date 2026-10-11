@@ -24,13 +24,23 @@ class ListOptions
     public readonly string $search;
 
     /**
+     * Paramètres propres à l'écran — période, mode de règlement — relevés
+     * ici pour qu'un clic sur un en-tête ou sur une page ne les perde pas.
+     *
+     * @var array<string, string>
+     */
+    public readonly array $extra;
+
+    /**
      * @param array<string, string> $colonnes libellé affiché => colonne SQL
+     * @param list<string>          $porter   paramètres GET à conserver
      */
     public function __construct(
         IncomingRequest $request,
         public readonly array $colonnes,
         string $defaut,
-        string $sensDefaut = "DESC"
+        string $sensDefaut = "DESC",
+        array $porter = []
     ) {
         $demande = (string) $request->getGet("tri");
         $this->sort = isset($colonnes[$demande]) ? $demande : $defaut;
@@ -44,6 +54,15 @@ class ListOptions
         $this->perPage = in_array($taille, self::TAILLES, true) ? $taille : self::TAILLES[0];
 
         $this->search = trim((string) $request->getGet("r"));
+
+        $extra = [];
+        foreach ($porter as $nom) {
+            $valeur = trim((string) $request->getGet($nom));
+            if ($valeur !== "") {
+                $extra[$nom] = $valeur;
+            }
+        }
+        $this->extra = $extra;
     }
 
     /** Colonne SQL correspondant au tri courant. */
@@ -60,12 +79,12 @@ class ListOptions
      */
     public function query(array $remplace = []): array
     {
-        $base = [
+        $base = array_merge($this->extra, [
             "tri" => $this->sort,
             "sens" => $this->dir,
             "taille" => $this->perPage,
             "r" => $this->search,
-        ];
+        ]);
 
         $params = array_merge($base, $remplace);
 

@@ -30,16 +30,22 @@ abstract class TenantModel extends Model
     }
 
     /**
-     * countAllResults() n'est pas une méthode du modèle mais un passe-plat
-     * vers le query builder: elle ne déclenche aucun callback. Sans cette
-     * surcharge, les compteurs du tableau de bord compteraient les lignes de
-     * toutes les agences.
+     * countAllResults() ne déclenche aucun callback: sans cette surcharge,
+     * les compteurs compteraient les lignes de toutes les agences.
+     *
+     * On pose la condition d'agence puis on laisse le modèle parent finir.
+     * Appeler directement le query builder, comme le faisait cette méthode,
+     * sautait la clause de suppression logique que le parent ajoute: les
+     * lignes mises à la corbeille étaient comptées. Le total affiché sous
+     * une liste paginée pouvait ainsi dépasser le nombre de lignes
+     * réellement affichables, et un quota se mesurait sur des dossiers
+     * supprimés.
      */
     public function countAllResults(bool $reset = true, bool $test = false)
     {
-        return $this->builder()
-            ->where($this->table . ".tenant_id", tenant_id())
-            ->countAllResults($reset, $test);
+        $this->builder()->where($this->table . ".tenant_id", tenant_id());
+
+        return parent::countAllResults($reset, $test);
     }
 
     protected function scopeTenant(array $event): array
