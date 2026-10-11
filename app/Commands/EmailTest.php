@@ -93,7 +93,8 @@ class EmailTest extends BaseCommand
             CLI::newLine();
             // Le détail du dialogue SMTP: c'est lui qui nomme la cause réelle,
             // authentification refusée, port filtré ou certificat rejeté.
-            CLI::write($courriel->printDebugger(["headers"]));
+            // printDebugger() renvoie du HTML, illisible dans un terminal.
+            CLI::write(html_entity_decode(strip_tags($courriel->printDebugger(["headers"]))));
 
             return EXIT_ERROR;
         }
