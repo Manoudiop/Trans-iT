@@ -157,9 +157,16 @@ class Users extends BaseController
         $modele = new ModelsUsers();
         $search = $this->request->getGet("r");
         if ($search) {
+            // Les deux critères doivent être groupés. Sans les parenthèses,
+            // SQL lit « name LIKE x OR (email LIKE x AND tenant_id = n) »,
+            // puisque AND lie plus fort que OR: la première condition
+            // s'affranchissait du cloisonnement, et une recherche par nom
+            // ramenait les comptes des autres agences.
             $modele
+                ->groupStart()
                 ->like("name", $search)
-                ->orLike("email", $search);
+                ->orLike("email", $search)
+                ->groupEnd();
         }
         return view("users/index.php", [
             "users" => $modele->orderBy("name", "asc")->find()

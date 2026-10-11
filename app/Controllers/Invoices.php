@@ -16,9 +16,14 @@ class Invoices extends BaseController
         $modele = new TransitFolders();
         $r = $this->request->getGet("r");
         if ($r) {
+            // Groupé: sans les parenthèses, AND liant plus fort que OR, la
+            // condition sur la référence s'affranchissait du cloisonnement
+            // par agence et du filtre sur les dossiers facturés.
             $modele
+                ->groupStart()
                 ->like("reference", $r)
-                ->orLike("id", $r);
+                ->orLike("id", $r)
+                ->groupEnd();
         }
         // Facture la plus récente en tête, comme la liste des dossiers.
         return view("invoices/index", [
