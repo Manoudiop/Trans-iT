@@ -60,6 +60,10 @@ writable/session/*
 writable/uploads/*
 !writable/uploads/index.html
 
+# Repli hors production du mot de passe oublie: ces fichiers
+# contiennent des liens de reinitialisation valides.
+writable/mail/
+
 writable/debugbar/*
 !writable/debugbar/.gitkeep
 

@@ -26,6 +26,16 @@ Connexion
     <div class="card card-md">
       <div class="card-body">
         <h2 class="h2 text-center mb-4">Connectez vous à votre compte</h2>
+
+        <?php // Cette page est l'arrivée de l'inscription comme de la
+        // réinitialisation de mot de passe, qui s'y annoncent par un message:
+        // il ne s'affichait nulle part. ?>
+        <?php if (session()->has("message")) : ?>
+          <div class="alert alert-success" role="alert">
+            <?= esc(session()->message) ?>
+          </div>
+        <?php endif ?>
+
         <?php if (session()->has("error")) : ?>
           <div class="alert alert-danger" role="alert">
             <?php if (is_string(session()->error)) : ?>
@@ -69,6 +79,10 @@ Connexion
         </div>
 
         <?= form_close() ?>
+
+        <div class="text-center mt-3">
+          <a href="<?= base_url("mot-de-passe-oublie") ?>" class="text-muted">Mot de passe oublié&nbsp;?</a>
+        </div>
       </div>
     </div>
 

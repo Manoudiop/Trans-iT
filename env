@@ -67,3 +67,20 @@
 #--------------------------------------------------------------------
 
 # logger.threshold = 4
+
+#--------------------------------------------------------------------
+# EMAIL
+#--------------------------------------------------------------------
+# Necessaire au « mot de passe oublie ». Sans expediteur configure, le
+# message est ecrit dans writable/mail/ hors production, et refuse en
+# production: un courriel de reinitialisation qui n'arrive pas est une
+# panne silencieuse.
+
+# email.fromEmail = 'no-reply@votre-domaine.sn'
+# email.fromName = 'Trans It!'
+# email.protocol = 'smtp'
+# email.SMTPHost = 'smtp.votre-fournisseur.sn'
+# email.SMTPUser = ''
+# email.SMTPPass = ''
+# email.SMTPPort = 587
+# email.SMTPCrypto = 'tls'

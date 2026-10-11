@@ -11,6 +11,12 @@ $routes->post('/', 'Users::login');
 //inscription en libre-service, hors authentification
 $routes->get('inscription', 'Signup::form');
 $routes->post('inscription', 'Signup::create');
+
+//mot de passe oublie: hors authentification, par definition
+$routes->get('mot-de-passe-oublie', 'PasswordReset::askForm');
+$routes->post('mot-de-passe-oublie', 'PasswordReset::ask');
+$routes->get('reinitialiser/(:segment)', 'PasswordReset::resetForm/$1');
+$routes->post('reinitialiser', 'PasswordReset::update');
 $routes->group('', ['filter' => 'auth'], function ($routes) {
   $routes->get('tableau-de-bord', 'Users::dashboard');
   $routes->post('edit-password', 'Users::editPwd');
