@@ -7,8 +7,21 @@ Connexion
 
 <div class="page page-center">
   <div class="container container-tight py-4">
+    <?php
+    // L'hôte, et non la session, décide de ce qu'on affiche ici: sur le
+    // domaine racine on s'adresse à un visiteur qui n'a pas encore d'espace,
+    // sur un sous-domaine à l'équipe d'une agence déjà inscrite.
+    $slug = config(\Config\Tenancy::class)->slugFromHost($_SERVER["HTTP_HOST"] ?? null);
+    ?>
+
     <div class="text-center mb-4">
-      <a href="." class="navbar-brand navbar-brand-autodark"><img src="./static/logo.svg" height="36" alt=""></a>
+      <?php // ./static/logo.svg n'existe pas dans le dépôt: la balise
+      // affichait une image cassée au-dessus du formulaire de connexion. ?>
+      <?php if ($slug !== null and agency_logo_url()) : ?>
+        <img src="<?= agency_logo_url() ?>" style="max-height: 48px;" alt="<?= esc(agency()["name"] ?? "") ?>">
+      <?php else : ?>
+        <span class="h2"><?= $slug === null ? "Trans It!" : esc(agency()["name"] ?? "Trans It!") ?></span>
+      <?php endif ?>
     </div>
     <div class="card card-md">
       <div class="card-body">
@@ -58,6 +71,21 @@ Connexion
         <?= form_close() ?>
       </div>
     </div>
+
+    <?php // L'inscription ne s'ouvre que depuis le domaine racine: proposer à
+    // l'équipe d'une agence déjà inscrite d'en créer une seconde n'aurait
+    // aucun sens. ?>
+    <?php if ($slug === null) : ?>
+      <div class="text-center mt-3">
+        Votre maison de transit n'a pas encore d'espace&nbsp;?
+        <a href="<?= base_url("inscription") ?>">Créez-le en quelques minutes</a>.
+      </div>
+    <?php else : ?>
+      <div class="text-center text-muted mt-3">
+        Vous êtes sur l'espace <strong><?= esc(agency()["name"] ?? $slug) ?></strong>.
+      </div>
+    <?php endif ?>
+
     <div class="text-center text-muted mt-3">
       ©2024 Trans It!
     </div>

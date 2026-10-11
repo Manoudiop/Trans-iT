@@ -79,7 +79,11 @@ Créer une agence
       </div>
     </div>
     <div class="text-center text-muted mt-3">
-      Vous avez déjà un compte ? Connectez-vous depuis l'adresse de votre agence.
+      <?php // Le lien pointe sur le domaine racine: on ignore à quelle agence
+      // le visiteur appartient, c'est précisément ce que son sous-domaine
+      // dirait. ?>
+      Vous avez déjà un compte&nbsp;? <a href="<?= base_url("/") ?>">Connectez-vous</a>
+      depuis l'adresse de votre agence.
     </div>
   </div>
 </div>
