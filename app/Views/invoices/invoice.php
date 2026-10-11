@@ -443,12 +443,6 @@ Facturation du dossier Nº<?= $id ?>
   let table = new DataTable('#merchTable');
 </script>
 <script>
-  const myModal = new bootstrap.Modal(
-    document.getElementById("modalId"),
-    options,
-  );
-</script>
-<script>
   const id = document.getElementById("id")
   document.getElementById("automation").addEventListener("change", e => {
     if (e.target.checked) {

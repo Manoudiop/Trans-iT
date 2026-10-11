@@ -153,12 +153,6 @@ Utilisateurs
   let table = new DataTable('#myTable');
 </script>
 <script>
-  const resetModal = new bootstrap.Modal(
-    document.getElementById("resetModal"),
-    options,
-  );
-</script>
-<script>
   document.getElementById("togglePassword").addEventListener("click", () => {
     const password = document.getElementById("password")
     const actualType = password.getAttribute("type")
@@ -172,12 +166,6 @@ Utilisateurs
   const setDeleteId = (id) => {
     document.getElementById("deleteId").value = id;
   }
-</script>
-<script>
-  const myModal = new bootstrap.Modal(
-    document.getElementById("deleteModal"),
-    options,
-  );
 </script>
 
 <?= $this->endSection(); ?>

@@ -576,27 +576,6 @@ Modification dossier Nº<?= $id ?>
 </script>
 
 <script>
-  const AddFileModal = new bootstrap.Modal(
-    document.getElementById("filesModal"),
-    options,
-  );
-</script>
-
-<script>
-  const deleteFileModal = new bootstrap.Modal(
-    document.getElementById("deleteFile"),
-    options,
-  );
-</script>
-
-<script>
-  const addMerch = new bootstrap.Modal(
-    document.getElementById("addMerch"),
-    options,
-  );
-</script>
-
-<script>
   let merchTable = new DataTable('.table');
 </script>
 

@@ -114,11 +114,5 @@ Clients
     document.getElementById("deleteId").value = id;
   }
 </script>
-<script>
-  const myModal = new bootstrap.Modal(
-    document.getElementById("deleteModal"),
-    options,
-  );
-</script>
 
 <?= $this->endSection(); ?>

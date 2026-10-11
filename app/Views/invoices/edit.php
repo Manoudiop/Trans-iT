@@ -430,24 +430,8 @@ Facturation du dossier Nº<?= $id ?>
 <script>
   let table = new DataTable('#merchTable');
 </script>
-<script>
-  const myModal = new bootstrap.Modal(
-    document.getElementById("modalId"),
-    options,
-  );
-</script>
-<script>
-  const id = document.getElementById("id")
-  document.getElementById("automation").addEventListener("change", e => {
-    if (e.target.checked) {
-      id.setAttribute("readonly", true);
-      id.setAttribute("placeholder", "Automatique");
-      id.value = "";
-    } else {
-      id.removeAttribute("readonly");
-      id.setAttribute("placeholder", "XXXXXXXX");
-      id.setAttribute("required", true);
-    }
-  })
-</script>
+<?php // Le script qui basculait le champ de référence selon la case
+// « numérotation automatique » a été retiré: cette case n'existe que sur
+// le formulaire de facturation, pas ici. Il échouait donc à chaque
+// ouverture de cette page, sur un getElementById qui ne trouvait rien. ?>
 <?= $this->endSection(); ?>
