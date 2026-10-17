@@ -311,7 +311,7 @@ Modification dossier Nº<?= $id ?>
       <?= csrf_field() ?>
       <input type="text" name="id" value="<?= $id ?>" hidden>
       <div class="row">
-        <?php if (session()->userData["profile"] == "ADMIN") : ?>
+        <?php if (est_admin()) : ?>
           <div class="col-md-6 col-lg-4">
             <div>Dossier fermé?</div>
             <div class="form-check form-check-inline">

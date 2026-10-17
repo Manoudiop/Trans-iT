@@ -26,7 +26,11 @@ class CanInvoice implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        if (!in_array(session()->userData["profile"], ["ADMIN", "COMPTABLE"])) {
+        // La même fonction que la mise en page: une entrée de menu visible
+        // doit mener à une page accessible.
+        helper("acl");
+
+        if (!peut_facturer()) {
             throw new PageNotFoundException("Vous ne disposez pas des droits d'accès à cette page.",403);
         }
     }

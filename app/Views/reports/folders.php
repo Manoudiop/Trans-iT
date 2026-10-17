@@ -90,7 +90,7 @@ Rapports des dossiers de transit
                       <i class="ti ti-settings"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="triggerId<?= $folder["id"] ?>">
-                      <?php if (!$folder["invoiced"] and session()->userData["profile"] != "OPERATEUR") : ?>
+                      <?php if (!$folder["invoiced"] and peut_facturer()) : ?>
                         <a class="dropdown-item" href="<?= base_url("factures/facturer/" . $folder["id"]) ?>">Facturer</a>
                       <?php endif ?>
                       <a class="dropdown-item" target="_blank" href="<?= base_url("dossiers/information/" . $folder["id"]) ?>">Consulter</a>

@@ -14,7 +14,7 @@ Rapports
     </div>
   </a>
 </div>
-<?php if (in_array(session()->userData["profile"], ["ADMIN", "COMPTABLE"])) : ?>
+<?php if (peut_facturer()) : ?>
   <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
     <a href="<?= base_url("rapports/factures") ?>" class="card card-sm flex-fill">
       <img style="height: 200px; width:100%; object-fit:cover; object-position:center" class="card-img-top" src="<?= base_url("/invoice.jpg") ?>" alt="Title" />

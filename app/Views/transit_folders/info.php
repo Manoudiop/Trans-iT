@@ -16,7 +16,7 @@ Informations dossier Nº<?= $id ?>
 <?= $this->endSection(); ?>
 <?= $this->section('add'); ?>
 <div class="d-flex flex-wrap gap-2">
-  <?php if (!$invoiced and session()->userData["profile"] != "OPERATEUR") : ?>
+  <?php if (!$invoiced and peut_facturer()) : ?>
     <a href="<?= base_url("factures/facturer/" . $id) ?>" class="d-flex align-items-center justify-content-center gap-1 btn btn-sm btn-success">
       <i class="ti ti-file"></i> Facturer
     </a>
@@ -205,7 +205,7 @@ Informations dossier Nº<?= $id ?>
             <p>Date de facturation:<code><?= !in_array($invoice_date, [null, "0000-00-00"]) ? date("d/m/Y", strtotime($invoice_date)) : "-" ?></code></p>
             <p>Auteur de la facturation<br /> <code><a href="mailto:<?= $invoice_author["email"] ?>"> <?= $invoice_author["name"] ?><i class="ti ti-link"></i></a></code></p>
           </div>
-          <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
+          <?php if (peut_facturer()) : ?>
             <div class="col-12 d-flex justify-content-end flex-wrap gap-1">
               <a href="<?= base_url('factures/modifier/' . $id) ?>" type="button" class="btn <?= $closed ? "disabled" : "" ?> btn-sm btn-warning">
                 <i class="ti ti-edit"></i> Modifier

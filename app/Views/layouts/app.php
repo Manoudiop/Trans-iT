@@ -114,7 +114,7 @@
               </div>
             </a>
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-              <?php if (session()->userData["profile"] == "ADMIN") : ?>
+              <?php if (est_admin()) : ?>
                 <a href="<?= base_url("agence") ?>" class="dropdown-item d-flex gap-2 align-items-center"><i class="ti ti-building-store"></i> Paramètres de l'agence</a>
                 <div class="dropdown-divider"></div>
               <?php endif ?>
@@ -131,34 +131,89 @@
         <div class="navbar">
           <div class="container-xl">
             <ul class="navbar-nav">
-              <?php if (session()->userData["profile"] == "ADMIN") : ?>
+              <?php
+              // Les écrans d'argent étaient dispersés: la facturation d'un
+              // côté, la trésorerie de l'autre, et le suivi des avances dans
+              // un troisième menu. Ils tiennent maintenant sous « Finances »,
+              // dans l'ordre du cycle: on facture, on encaisse, on suit la
+              // caisse.
+              //
+              // La visibilité suit peut_facturer(), la fonction qu'applique
+              // aussi le filtre des routes: une entrée visible mène à une
+              // page accessible.
+              // || et non « or »: l'affectation lie plus fort que « or », et
+              // $finances ne recevrait que la première condition.
+              $finances = url_is("factures*") || url_is("tresorerie*");
+              ?>
+
+              <?php if (est_admin()) : ?>
                 <li class="nav-item <?= url_is("tableau-de-bord*") ? "active" : "" ?>">
                   <a class="nav-link d-flex align-items-center" href="<?= base_url("tableau-de-bord") ?>">
-                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
                       <i class="ti ti-dashboard"></i>
                     </span>
-                    <span class="nav-link-title">
-                      Tableau de bord
-                    </span>
+                    <span class="nav-link-title">Tableau de bord</span>
                   </a>
                 </li>
               <?php endif ?>
-              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
-                <li class="nav-item dropdown <?= (url_is("dossiers/suivi*") or url_is("factures/encours*") or url_is("tresorerie/rapprochement*")) ? "active" : "" ?>">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+
+              <li class="nav-item dropdown <?= url_is("dossiers*") ? "active" : "" ?>">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                  <span class="nav-link-icon d-md-none d-lg-inline-block">
+                    <i class="ti ti-folder"></i>
+                  </span>
+                  <span class="nav-link-title">Dossiers</span>
+                </a>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="<?= base_url("dossiers/ajouter") ?>">
+                    Créer un nouveau dossier
+                  </a>
+                  <a class="dropdown-item" href="<?= base_url("dossiers") ?>">
+                    Lister les dossiers
+                  </a>
+                  <?php // Le suivi des étapes bloquées quitte « Pilotage »,
+                  // qui mélangeait exploitation et argent: il parle de
+                  // dossiers, il vit avec eux. ?>
+                  <a class="dropdown-item" href="<?= base_url("dossiers/suivi") ?>">
+                    Suivi d'exploitation
+                  </a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="<?= base_url("dossiers/corbeille") ?>">
+                    Corbeille
+                  </a>
+                </div>
+              </li>
+
+              <?php if (peut_facturer()) : ?>
+                <li class="nav-item dropdown <?= $finances ? "active" : "" ?>">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                     <span class="nav-link-icon d-md-none d-lg-inline-block">
-                      <i class="ti ti-target-arrow"></i>
+                      <i class="ti ti-coins"></i>
                     </span>
-                    <span class="nav-link-title">
-                      Pilotage
-                    </span>
+                    <span class="nav-link-title">Finances</span>
                   </a>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="<?= base_url("dossiers/suivi") ?>">
-                      Suivi d'exploitation
+                    <h6 class="dropdown-header">Facturation</h6>
+                    <a class="dropdown-item" href="<?= base_url("factures") ?>">
+                      Dossiers facturés
+                    </a>
+                    <a class="dropdown-item" href="<?= base_url("factures/non-factures") ?>">
+                      Dossiers à facturer
+                    </a>
+
+                    <div class="dropdown-divider"></div>
+                    <h6 class="dropdown-header">Encaissement</h6>
+                    <a class="dropdown-item" href="<?= base_url("factures/encaissements") ?>">
+                      Encaissements
                     </a>
                     <a class="dropdown-item" href="<?= base_url("factures/encours") ?>">
                       Suivi des avances
+                    </a>
+
+                    <div class="dropdown-divider"></div>
+                    <h6 class="dropdown-header">Trésorerie</h6>
+                    <a class="dropdown-item" href="<?= base_url("tresorerie") ?>">
+                      Caisse et banque
                     </a>
                     <a class="dropdown-item" href="<?= base_url("tresorerie/rapprochement") ?>">
                       Décaissé contre facturé
@@ -166,35 +221,14 @@
                   </div>
                 </li>
               <?php endif ?>
-              <?php if (session()->userData["profile"] == "ADMIN") : ?>
-                <li class="nav-item dropdown <?= url_is("utilisateurs*") ? "active" : "" ?>">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    <span class="nav-link-icon d-md-none d-lg-inline-block">
-                      <i class="ti ti-users"></i>
-                    </span>
-                    <span class="nav-link-title">
-                      Utilisateurs
-                    </span>
-                  </a>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="<?= base_url("utilisateurs/ajouter") ?>">
-                      Créer un nouveau compte
-                    </a>
-                    <a class="dropdown-item" href="<?= base_url("utilisateurs") ?>">
-                      Lister les utilisateurs
-                    </a>
-                  </div>
-                </li>
-              <?php endif ?>
-              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
+
+              <?php if (peut_facturer()) : ?>
                 <li class="nav-item dropdown <?= url_is("clients*") ? "active" : "" ?>">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                     <span class="nav-link-icon d-md-none d-lg-inline-block">
-                      <i class="ti ti-users"></i>
+                      <i class="ti ti-address-book"></i>
                     </span>
-                    <span class="nav-link-title">
-                      Clients
-                    </span>
+                    <span class="nav-link-title">Clients</span>
                   </a>
                   <div class="dropdown-menu">
                     <a class="dropdown-item" href="<?= base_url("clients/ajouter") ?>">
@@ -207,86 +241,44 @@
                 </li>
               <?php endif ?>
 
-              <li class="nav-item dropdown <?= url_is("dossiers*") ? "active" : "" ?>">
-                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
-                  <span class="nav-link-icon d-md-none d-lg-inline-block">
-                    <i class="ti ti-folder"></i>
-                  </span>
-                  <span class="nav-link-title">
-                    Dossiers
-                  </span>
-                </a>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" href="<?= base_url("dossiers/ajouter") ?>">
-                    Créer un nouveau dossier
-                  </a>
-                  <a class="dropdown-item" href="<?= base_url("dossiers") ?>">
-                    Lister les dossiers
-                  </a>
-                  <a class="dropdown-item" href="<?= base_url("dossiers/corbeille") ?>">
-                    Corbeille
-                  </a>
-                </div>
-              </li>
-              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
-                <li class="nav-item dropdown <?= url_is("factures*") ? "active" : "" ?>">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+              <?php if (est_admin()) : ?>
+                <li class="nav-item dropdown <?= url_is("utilisateurs*") ? "active" : "" ?>">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                     <span class="nav-link-icon d-md-none d-lg-inline-block">
-                      <i class="ti ti-file"></i>
+                      <i class="ti ti-users"></i>
                     </span>
-                    <span class="nav-link-title">
-                      Factures
-                    </span>
+                    <span class="nav-link-title">Utilisateurs</span>
                   </a>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="<?= base_url("factures") ?>">
-                      Lister les dossiers facturés
+                    <a class="dropdown-item" href="<?= base_url("utilisateurs/ajouter") ?>">
+                      Créer un nouveau compte
                     </a>
-                    <a class="dropdown-item" href="<?= base_url("factures/non-factures") ?>">
-                      Lister les dossiers non facturés
-                    </a>
-                    <a class="dropdown-item" href="<?= base_url("factures/encaissements") ?>">
-                      Encaissements
+                    <a class="dropdown-item" href="<?= base_url("utilisateurs") ?>">
+                      Lister les utilisateurs
                     </a>
                   </div>
                 </li>
               <?php endif ?>
-              <?php if (session()->userData["profile"] != "OPERATEUR") : ?>
-                <li class="nav-item <?= url_is("tresorerie*") ? "active" : "" ?>">
-                  <a class="nav-link d-flex align-items-center" href="<?= base_url("tresorerie") ?>">
-                    <span class="nav-link-icon d-md-none d-lg-inline-block">
-                      <i class="ti ti-cash"></i>
-                    </span>
-                    <span class="nav-link-title">
-                      Trésorerie
-                    </span>
-                  </a>
-                </li>
-              <?php endif ?>
-              <li class="nav-item dropdown <?= url_is("rapports*") ? "active" : "" ?>">
+
+              <li class="nav-item <?= url_is("rapports*") ? "active" : "" ?>">
                 <a class="nav-link d-flex align-items-center" href="<?= base_url("rapports") ?>">
-                  <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
+                  <span class="nav-link-icon d-md-none d-lg-inline-block">
                     <i class="ti ti-archive"></i>
                   </span>
-                  <span class="nav-link-title">
-                    Rapports
-                  </span>
+                  <span class="nav-link-title">Rapports</span>
                 </a>
               </li>
+
               <?php if (!empty(session()->userData["is_platform_admin"])) : ?>
                 <li class="nav-item <?= url_is("console*") ? "active" : "" ?>">
                   <a class="nav-link d-flex align-items-center" href="<?= base_url("console") ?>">
                     <span class="nav-link-icon d-md-none d-lg-inline-block">
                       <i class="ti ti-building"></i>
                     </span>
-                    <span class="nav-link-title">
-                      Console
-                    </span>
+                    <span class="nav-link-title">Console</span>
                   </a>
                 </li>
               <?php endif ?>
-
-
             </ul>
           </div>
         </div>
