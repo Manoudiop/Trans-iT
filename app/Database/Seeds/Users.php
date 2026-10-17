@@ -11,7 +11,10 @@ class Users extends Seeder
     {
         $faker = Factory::create();
         $data = [];
-        $profile = ["ADMIN","FACTURATION","OPERATEUR"];
+        // Les trois profils que le formulaire de création propose. FACTURATION
+        // figurait ici alors qu'il n'ouvre aucun écran d'argent: le jeu de
+        // démonstration fabriquait des comptes impotents.
+        $profile = ["ADMIN", "COMPTABLE", "OPERATEUR"];
 
         // insertBatch court-circuite les callbacks du modèle: on hache ici.
         $password = password_hash("theyankee", PASSWORD_DEFAULT);
